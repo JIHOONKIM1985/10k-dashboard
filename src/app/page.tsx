@@ -33,13 +33,7 @@ export default function Home() {
   const [loginPw, setLoginPw] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showCorrectionSetting, setShowCorrectionSetting] = useState(false);
-  const [correctionRange, setCorrectionRange] = useState(() => {
-    const saved = localStorage.getItem('correctionRange');
-    return saved ? JSON.parse(saved) : {
-      shoppingRiseMin: 30, shoppingRiseMax: 40,
-      // 추후 유지/하락, 다른 등락률도 추가 가능
-    };
-  });
+  const [correctionRange, setCorrectionRange] = useState<any>({});
   const [activeHandle, setActiveHandle] = useState<string | null>(null);
 
   useEffect(() => {
@@ -63,7 +57,20 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('correctionRange', JSON.stringify(correctionRange));
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem('correctionRange');
+      if (saved) setCorrectionRange(JSON.parse(saved));
+      else setCorrectionRange({
+        shoppingRiseMin: 30, shoppingRiseMax: 40,
+        // 추후 유지/하락, 다른 등락률도 추가 가능
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem('correctionRange', JSON.stringify(correctionRange));
+    }
   }, [correctionRange]);
 
   // 보정치 적용 함수
