@@ -100,7 +100,7 @@ export default function DashboardLineChart({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-2">
         <div className="text-xl font-bold text-white tracking-tight mb-2 sm:mb-0">
           {chartTitleToUse}
-          <sup className="ml-2 text-xs text-gray-400 align-super">*소수점 이하 절사</sup>
+          <sup className="ml-2 text-xs text-gray-400 sup-top-align">*소수점 이하 절사</sup>
         </div>
         {/* 미니멀 범례 */}
         <div className="flex gap-3">

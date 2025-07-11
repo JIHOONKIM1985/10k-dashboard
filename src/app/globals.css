@@ -44,3 +44,11 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #666;
 }
+
+.sup-top-align {
+  font-size: 0.7em;
+  vertical-align: top;
+  position: relative;
+  top: 0.1em; /* 필요시 미세조정, 0~0.2em 사이에서 조절 가능 */
+  margin-left: 4px;
+}

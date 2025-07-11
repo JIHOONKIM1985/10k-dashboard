@@ -511,7 +511,10 @@ export default function Home() {
             <div className="flex flex-col gap-8">
               {correctionItems.map(item => (
                 <div key={item.key}>
-                  <div className="font-bold text-lg mb-4">{item.label}</div>
+                  <div className="font-bold text-lg mb-4">
+                    {item.label}
+                    <sup className="ml-2 text-xs text-gray-400 sup-top-align">(어제대비)</sup>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {types.map(type => (
                       <div key={type.key} className="bg-[#232329] rounded-2xl p-6 flex flex-col items-center shadow-lg border border-white/10 min-w-[220px]">
@@ -592,7 +595,7 @@ export default function Home() {
                   const show = isLoggedIn ? rate : getCachedCorrectedRates('shopping', rate, correctionRange, 'shopping');
                   return (
                     <div className="mt-8">
-                      <h2 className="font-semibold mb-4 text-white">쇼핑 전체 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
+                      <h2 className="font-semibold mb-4 text-white">쇼핑 전체 등락률<sup className="ml-1 text-xs text-gray-400 sup-top-align">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
@@ -627,7 +630,7 @@ export default function Home() {
                   const showSingle = isLoggedIn ? singleRate : getCachedCorrectedRates('shoppingSingle', singleRate, correctionRange, 'shoppingSingle');
                   return (
                     <div className="mt-6">
-                      <h2 className="font-semibold mb-2">쇼핑[단일] 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
+                      <h2 className="font-semibold mb-2">쇼핑[단일] 등락률<sup className="ml-1 text-xs text-gray-400 sup-top-align">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
@@ -660,7 +663,7 @@ export default function Home() {
                   const showCompare = isLoggedIn ? compareRate : getCachedCorrectedRates('shoppingCompare', compareRate, correctionRange, 'shoppingCompare');
                   return (
                     <div className="mt-6">
-                      <h2 className="font-semibold mb-2">쇼핑[가격비교] 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
+                      <h2 className="font-semibold mb-2">쇼핑[가격비교] 등락률<sup className="ml-1 text-xs text-gray-400 sup-top-align">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
@@ -693,7 +696,7 @@ export default function Home() {
                   const showPlace = isLoggedIn ? placeRate : getCachedCorrectedRates('place', placeRate, correctionRange, 'place');
                   return (
                     <div className="mt-8">
-                      <h2 className="font-semibold mb-4 text-white">플레이스 전체 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
+                      <h2 className="font-semibold mb-4 text-white">플레이스 전체 등락률<sup className="ml-1 text-xs text-gray-400 sup-top-align">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
@@ -726,7 +729,7 @@ export default function Home() {
                   const showQuiz = isLoggedIn ? quizRate : getCachedCorrectedRates('quiz', quizRate, correctionRange, 'quiz');
                   return (
                     <div className="mt-6">
-                      <h2 className="font-semibold mb-2">플레이스 퀴즈 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
+                      <h2 className="font-semibold mb-2">플레이스 퀴즈 등락률<sup className="ml-1 text-xs text-gray-400 sup-top-align">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
@@ -759,7 +762,7 @@ export default function Home() {
                   const showSave = isLoggedIn ? saveRate : getCachedCorrectedRates('placeSave', saveRate, correctionRange, 'placeSave');
                   return (
                     <div className="mt-6">
-                      <h2 className="font-semibold mb-2">플레이스 저장 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
+                      <h2 className="font-semibold mb-2">플레이스 저장 등락률<sup className="ml-1 text-xs text-gray-400 sup-top-align">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
@@ -792,7 +795,7 @@ export default function Home() {
                   const showSave2 = isLoggedIn ? save2Rate : getCachedCorrectedRates('placeSave2', save2Rate, correctionRange, 'placeSave2');
                   return (
                     <div className="mt-6">
-                      <h2 className="font-semibold mb-2">플레이스 저장x2 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
+                      <h2 className="font-semibold mb-2">플레이스 저장x2 등락률<sup className="ml-1 text-xs text-gray-400 sup-top-align">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
@@ -825,7 +828,7 @@ export default function Home() {
                   const showKeep = isLoggedIn ? keepRate : getCachedCorrectedRates('placeKeep', keepRate, correctionRange, 'placeKeep');
                   return (
                     <div className="mt-6">
-                      <h2 className="font-semibold mb-2">플레이스 KEEP 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
+                      <h2 className="font-semibold mb-2">플레이스 KEEP 등락률<sup className="ml-1 text-xs text-gray-400 sup-top-align">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
