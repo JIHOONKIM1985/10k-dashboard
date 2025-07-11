@@ -13,6 +13,8 @@ import { getShoppingDashboardListV2 } from "@/utils/dashboardProcessor";
 import { getPlaceDashboardListV2 } from "@/utils/dashboardProcessor";
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
+import { saveUploadData, loadUploadData, loadAdjustment } from "@/utils/firestoreService";
+import { saveAdjustment } from "@/utils/firestoreService";
 
 export default function Home() {
   const [rawData, setRawData] = useState<any[][]>([]);
@@ -37,23 +39,27 @@ export default function Home() {
   const [activeHandle, setActiveHandle] = useState<string | null>(null);
 
   useEffect(() => {
-    // 페이지 로드 시 localStorage에서 데이터 불러오기
-    const saved = localStorage.getItem('dashboardData');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setRawData(parsed.rawData || []);
-      setTempData(parsed.tempData || []);
-      setRate(parsed.rate || null);
-      setSingleRate(parsed.singleRate || null);
-      setCompareRate(parsed.compareRate || null);
-      setPlaceRate(parsed.placeRate || null);
-      setQuizRate(parsed.quizRate || null);
-      setSaveRate(parsed.saveRate || null);
-      setSave2Rate(parsed.save2Rate || null);
-      setKeepRate(parsed.keepRate || null);
-      setShoppingList(parsed.shoppingList || []);
-      setPlaceList(parsed.placeList || []);
-    }
+    // Firestore에서 업로드 데이터 불러오기
+    loadUploadData().then(data => {
+      if (data) {
+        setRawData(data.rawData || []);
+        setTempData(data.tempData || []);
+        setRate(data.rate || null);
+        setSingleRate(data.singleRate || null);
+        setCompareRate(data.compareRate || null);
+        setPlaceRate(data.placeRate || null);
+        setQuizRate(data.quizRate || null);
+        setSaveRate(data.saveRate || null);
+        setSave2Rate(data.save2Rate || null);
+        setKeepRate(data.keepRate || null);
+        setShoppingList(data.shoppingList || []);
+        setPlaceList(data.placeList || []);
+      }
+    });
+    // Firestore에서 보정치 불러오기
+    loadAdjustment().then(data => {
+      if (data) setCorrectionRange(data);
+    });
   }, []);
 
   useEffect(() => {
@@ -166,6 +172,25 @@ export default function Home() {
       shoppingList: newShoppingList,
       placeList: newPlaceList,
     }));
+
+    // Firestore에 업로드 데이터 저장
+    saveUploadData({
+      rawData: data,
+      tempData: temp,
+      rate: newRate,
+      singleRate: newSingleRate,
+      compareRate: newCompareRate,
+      placeRate: newPlaceRate,
+      quizRate: newQuizRate,
+      saveRate: newSaveRate,
+      save2Rate: newSave2Rate,
+      keepRate: newKeepRate,
+      shoppingList: newShoppingList,
+      placeList: newPlaceList,
+      updatedAt: Date.now(), // 저장 시각 등 추가 가능
+    }).then(() => {
+      alert("업로드 데이터가 Firestore에 저장되었습니다!");
+    });
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -232,6 +257,7 @@ export default function Home() {
             </span>
           </div>
           <div className="text-2xl font-bold mb-8">10K Dashboard</div>
+          <div className="text-base text-gray-300 mb-8">{todayStr}</div>
           <nav className="flex flex-col gap-2">
             <button
               className={`text-lg font-bold text-left mb-2 ${activeMenu === 'dashboard' ? 'text-white' : 'text-gray-400'}`}
@@ -344,7 +370,13 @@ export default function Home() {
               <div className="flex gap-4 mt-8">
                 <button
                   className="px-6 py-2 rounded text-sm font-bold bg-green-500 text-white transition"
-                  onClick={() => { setShowCorrectionSetting(false); }}
+                  onClick={() => {
+                    console.log("보정치 저장 함수 호출!", correctionRange);
+                    saveAdjustment(correctionRange).then(() => {
+                      alert("보정치가 Firestore에 저장되었습니다!");
+                      setShowCorrectionSetting(false);
+                    });
+                  }}
                 >
                   보정치 저장
                 </button>
@@ -752,31 +784,6 @@ export default function Home() {
             </>
           )}
         </main>
-        {/* 로그인 모달 */}
-        {showLogin && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-[#232329] rounded-2xl p-8 shadow-lg w-80 border border-white/10">
-              <h2 className="text-xl font-bold mb-4 text-white">관리자 로그인</h2>
-              <form onSubmit={handleLogin}>
-                <input
-                  className="w-full mb-3 px-3 py-2 rounded bg-[#18181b] text-white border border-white/10 outline-none"
-                  placeholder="ID"
-                  value={loginId}
-                  onChange={e => setLoginId(e.target.value)}
-                />
-                <input
-                  className="w-full mb-4 px-3 py-2 rounded bg-[#18181b] text-white border border-white/10 outline-none"
-                  placeholder="PW"
-                  type="password"
-                  value={loginPw}
-                  onChange={e => setLoginPw(e.target.value)}
-                />
-                <button type="submit" className="w-full bg-white/10 text-white py-2 rounded font-bold hover:bg-white/20 transition">로그인</button>
-                <button type="button" className="w-full mt-2 text-gray-400 hover:text-white" onClick={() => setShowLogin(false)}>취소</button>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
