@@ -41,8 +41,8 @@ export default function Home() {
   useEffect(() => {
     loadUploadData().then(data => {
       if (data) {
-        setRawData(data.rawData || []);
-        setTempData(data.tempData || []);
+        setRawData(data.rawData ? JSON.parse(data.rawData) : []);
+        setTempData(data.tempData ? JSON.parse(data.tempData) : []);
         setRate(data.rate || null);
         setSingleRate(data.singleRate || null);
         setCompareRate(data.compareRate || null);
@@ -51,8 +51,8 @@ export default function Home() {
         setSaveRate(data.saveRate || null);
         setSave2Rate(data.save2Rate || null);
         setKeepRate(data.keepRate || null);
-        setShoppingList(data.shoppingList || []);
-        setPlaceList(data.placeList || []);
+        setShoppingList(data.shoppingList ? JSON.parse(data.shoppingList) : []);
+        setPlaceList(data.placeList ? JSON.parse(data.placeList) : []);
       } else {
         // Firestore에 데이터가 없을 때 기본값 세팅 (또는 안내 메시지)
         setRawData([]);
@@ -185,10 +185,10 @@ export default function Home() {
       placeList: newPlaceList,
     }));
 
-    // Firestore에 업로드 데이터 저장
+    // Firestore에 업로드 데이터 저장 (2차원 배열은 JSON 문자열로 저장)
     saveUploadData({
-      rawData: data,
-      tempData: temp,
+      rawData: JSON.stringify(data),
+      tempData: JSON.stringify(temp),
       rate: newRate,
       singleRate: newSingleRate,
       compareRate: newCompareRate,
@@ -197,8 +197,8 @@ export default function Home() {
       saveRate: newSaveRate,
       save2Rate: newSave2Rate,
       keepRate: newKeepRate,
-      shoppingList: newShoppingList,
-      placeList: newPlaceList,
+      shoppingList: JSON.stringify(newShoppingList),
+      placeList: JSON.stringify(newPlaceList),
       updatedAt: Date.now(), // 저장 시각 등 추가 가능
     }).then(() => {
       alert("업로드 데이터가 Firestore에 저장되었습니다!");
@@ -213,6 +213,7 @@ export default function Home() {
       setLoginId("");
       setLoginPw("");
       setIsLoggedIn(true);
+      localStorage.setItem('isLoggedIn', 'true');
     } else {
       alert("로그인 실패");
     }
@@ -339,7 +340,7 @@ export default function Home() {
             {isLoggedIn ? (
               <button
                 className="text-lg font-bold text-left mt-2 text-green-400 hover:text-white transition"
-                onClick={() => { setIsLoggedIn(false); setLoginId(""); setLoginPw(""); }}
+                onClick={() => { setIsLoggedIn(false); setLoginId(""); setLoginPw(""); localStorage.removeItem('isLoggedIn'); }}
               >
                 로그아웃
               </button>
