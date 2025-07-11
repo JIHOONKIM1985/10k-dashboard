@@ -737,9 +737,9 @@ export default function Home() {
               {(activeMenu === 'dashboard' || activeMenu === 'shopping') && shoppingList && shoppingList.length > 0 ? (
                 <>
                   <div className="text-lg font-semibold mt-12 mb-4 text-white">네이버 쇼핑 데이터</div>
-                  <div className="rounded-2xl shadow-lg bg-[#18181b] mt-0 border border-white/10">
+                  <div className="rounded-2xl shadow-lg bg-[#18181b] mt-0 border border-white/10 overflow-hidden">
                     <div className="max-h-[700px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#232329] scrollbar-track-[#18181b]">
-                      <table className="w-full rounded-2xl">
+                      <table className="w-full">
                         <thead>
                           <tr>
                             {/* 쇼핑 표 헤더 */}
@@ -818,9 +818,9 @@ export default function Home() {
                 placeList && placeList.length > 0 ? (
                   <>
                     <div className="text-lg font-semibold mt-12 mb-4 text-white">네이버 플레이스 데이터</div>
-                    <div className="rounded-2xl shadow-lg bg-[#18181b] mt-0 border border-white/10">
+                    <div className="rounded-2xl shadow-lg bg-[#18181b] mt-0 border border-white/10 overflow-hidden">
                       <div className="max-h-[700px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#232329] scrollbar-track-[#18181b]">
-                        <table className="w-full rounded-2xl">
+                        <table className="w-full">
                           <thead>
                             <tr>
                               {/* 플레이스 표 헤더 */}
