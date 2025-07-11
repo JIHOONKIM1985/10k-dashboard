@@ -13,8 +13,9 @@ import { getShoppingDashboardListV2 } from "@/utils/dashboardProcessor";
 import { getPlaceDashboardListV2 } from "@/utils/dashboardProcessor";
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
-import { saveUploadData, loadUploadData, loadAdjustment } from "@/utils/firestoreService";
+import { saveUploadData, loadUploadData, loadAdjustment, saveUploadHistory, loadUploadHistory, saveAdjustmentHistory, loadAdjustmentHistory } from "@/utils/firestoreService";
 import { saveAdjustment } from "@/utils/firestoreService";
+import DashboardLineChart from "@/components/DashboardLineChart";
 
 export default function Home() {
   const [rawData, setRawData] = useState<any[][]>([]);
@@ -37,6 +38,101 @@ export default function Home() {
   const [showCorrectionSetting, setShowCorrectionSetting] = useState(false);
   const [correctionRange, setCorrectionRange] = useState<any>({});
   const [activeHandle, setActiveHandle] = useState<string | null>(null);
+
+  // 차트 상태 및 예시 데이터 (쇼핑/플레이스)
+  const [periodType, setPeriodType] = useState<'day' | 'week' | 'month'>('day');
+  const [shoppingLineOptions, setShoppingLineOptions] = useState([
+    { key: '전체', label: '전체', color: '#22c55e', visible: true },
+    { key: '단일', label: '단일', color: '#3b82f6', visible: false },
+    { key: '가격비교', label: '가격비교', color: '#ef4444', visible: false },
+  ]);
+  const [placeLineOptions, setPlaceLineOptions] = useState([
+    { key: '전체', label: '전체', color: '#22c55e', visible: true },
+    { key: '퀴즈', label: '퀴즈', color: '#3b82f6', visible: false },
+    { key: '저장', label: '저장', color: '#ef4444', visible: false },
+    { key: '저장x2', label: '저장x2', color: '#f59e42', visible: false },
+    { key: 'KEEP', label: 'KEEP', color: '#a855f7', visible: false },
+  ]);
+  const lineOptions = activeMenu === 'shopping' ? shoppingLineOptions : placeLineOptions;
+  const handleToggleLine = (key: string) => {
+    if (activeMenu === 'shopping') setShoppingLineOptions(lines => lines.map(l => l.key === key ? { ...l, visible: !l.visible } : l));
+    else setPlaceLineOptions(lines => lines.map(l => l.key === key ? { ...l, visible: !l.visible } : l));
+  };
+  const handleChangePeriod = (type: 'day' | 'week' | 'month') => {
+    setPeriodType(type);
+    // 실제 데이터 가공 로직은 추후 추가
+  };
+
+  // 차트 이력 데이터 상태
+  const [history, setHistory] = useState<any[]>([]);
+  useEffect(() => {
+    loadUploadHistory().then(data => {
+      if (Array.isArray(data)) setHistory(data);
+    });
+  }, []);
+
+  // 보정치 이력 상태
+  const [adjustmentHistory, setAdjustmentHistory] = useState<any[]>([]);
+  useEffect(() => {
+    loadAdjustmentHistory().then(data => {
+      if (Array.isArray(data)) setAdjustmentHistory(data);
+    });
+  }, []);
+
+  // 날짜별로 해당 시점의 보정치 찾기
+  function findAdjustmentForDate(dateStr: string) {
+    if (!adjustmentHistory.length) return null;
+    const date = new Date(dateStr + 'T23:59:59');
+    // savedAt이 date 이하인 것 중 가장 최근
+    const found = [...adjustmentHistory]
+      .filter(adj => adj.savedAt <= date.getTime())
+      .sort((a, b) => b.savedAt - a.savedAt)[0];
+    return found || adjustmentHistory[0]; // 없으면 첫 보정치라도 반환
+  }
+
+  // 오늘/어제 날짜를 useState/useEffect로 관리 (SSR/CSR 불일치 방지)
+  const [todayStr, setTodayStr] = React.useState('');
+  const [yesterdayStr, setYesterdayStr] = React.useState('');
+  const [todayFullStr, setTodayFullStr] = React.useState('');
+  React.useEffect(() => {
+    const today = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const week = ['일', '월', '화', '수', '목', '금', '토'];
+    setTodayStr(`${pad(today.getMonth() + 1)}월 ${pad(today.getDate())}일`);
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    setYesterdayStr(`${pad(yesterday.getMonth() + 1)}월 ${pad(yesterday.getDate())}일`);
+    setTodayFullStr(`${today.getFullYear()}년 ${pad(today.getMonth() + 1)}월 ${pad(today.getDate())}일 (${week[today.getDay()]})`);
+  }, []);
+
+  // chartData는 todayStr을 date로 사용
+  const chartData = React.useMemo(() => {
+    if (!todayStr) return [];
+    if (activeMenu === 'shopping') {
+      return [
+        {
+          date: todayStr,
+          전체: rate?.상승 ?? null,
+          단일: singleRate?.상승 ?? null,
+          가격비교: compareRate?.상승 ?? null,
+        },
+      ];
+    } else {
+      return [
+        {
+          date: todayStr,
+          전체: placeRate?.상승 ?? null,
+          퀴즈: quizRate?.상승 ?? null,
+          저장: saveRate?.상승 ?? null,
+          저장x2: save2Rate?.상승 ?? null,
+          KEEP: keepRate?.상승 ?? null,
+        },
+      ];
+    }
+  }, [activeMenu, rate, singleRate, compareRate, placeRate, quizRate, saveRate, save2Rate, keepRate, todayStr]);
+
+  // 1. 등락률 박스와 차트 동기화용: chartData 최신값 추출
+  const latestChart = chartData && chartData.length > 0 ? chartData[chartData.length - 1] : null;
 
   useEffect(() => {
     loadUploadData().then(data => {
@@ -152,6 +248,7 @@ export default function Home() {
     if (typeof window !== 'undefined') localStorage.removeItem('correctedRatesCache');
   }
 
+  // 2. 업로드 시 등락률 박스(팩트/보정) 기준으로 이력 저장
   const handleUpload = (data: any[][]) => {
     clearCorrectedRatesCache();
     setRawData(data);
@@ -211,6 +308,27 @@ export default function Home() {
     }).then(() => {
       alert("업로드 데이터가 Firestore에 저장되었습니다!");
     });
+
+    // Firestore에 업로드 이력 누적 저장 (YYYY-MM-DD)
+    const today = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const dateStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+    saveUploadHistory(dateStr, {
+      date: dateStr,
+      shopping: {
+        전체: newRate?.상승 ?? null,
+        단일: newSingleRate?.상승 ?? null,
+        가격비교: newCompareRate?.상승 ?? null,
+      },
+      place: {
+        전체: newPlaceRate?.상승 ?? null,
+        퀴즈: newQuizRate?.상승 ?? null,
+        저장: newSaveRate?.상승 ?? null,
+        저장x2: newSave2Rate?.상승 ?? null,
+        KEEP: newKeepRate?.상승 ?? null,
+      },
+      updatedAt: Date.now(),
+    });
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -226,18 +344,6 @@ export default function Home() {
       alert("로그인 실패");
     }
   };
-
-  // 오늘/어제 날짜 구하기
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  const week = ['일', '월', '화', '수', '목', '금', '토'];
-  const formatDate = (date: Date) => `${pad(date.getMonth() + 1)}월 ${pad(date.getDate())}일`;
-  const formatFullDate = (date: Date) => `${date.getFullYear()}년 ${pad(date.getMonth() + 1)}월 ${pad(date.getDate())}일 ${week[date.getDay()]}요일`;
-  const todayStr = formatDate(today);
-  const yesterdayStr = formatDate(yesterday);
-  const todayFullStr = formatFullDate(today);
 
   // 쇼핑 대시보드 헤더
   const shoppingDashboardHeader = [
@@ -381,6 +487,26 @@ export default function Home() {
         </aside>
         {/* 메인 컨텐츠 */}
         <main className="w-[1440px] max-w-none p-8">
+          {/* Raw 데이터 업로드: 최상단으로 이동 */}
+          {isLoggedIn && (
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold mb-4">Raw 데이터를 업로드 해주세요</h1>
+              <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 border border-white/10">
+                <ExcelUploader onData={handleUpload} />
+              </div>
+            </div>
+          )}
+          {/* 차트: 쇼핑/플레이스 메뉴에서만 노출, 보정치 조정 중에는 숨김 */}
+          {(activeMenu === 'shopping' || activeMenu === 'place') && !showCorrectionSetting && (
+            <DashboardLineChart
+              data={chartData}
+              lines={lineOptions}
+              onToggleLine={handleToggleLine}
+              periodType={periodType}
+              onChangePeriod={handleChangePeriod}
+              chartTitle={activeMenu === 'shopping' ? '네이버 쇼핑 상승 추이' : '네이버 플레이스 상승 추이'}
+            />
+          )}
           {showCorrectionSetting ? (
             <div className="flex flex-col gap-8">
               {correctionItems.map(item => (
@@ -434,6 +560,8 @@ export default function Home() {
                   onClick={() => {
                     console.log("보정치 저장 함수 호출!", correctionRange);
                     saveAdjustment(correctionRange).then(() => {
+                      // 보정치 이력도 Firestore에 누적 저장
+                      saveAdjustmentHistory(correctionRange, Date.now());
                       alert("보정치가 Firestore에 저장되었습니다!");
                       setShowCorrectionSetting(false);
                     });
@@ -457,14 +585,6 @@ export default function Home() {
             </div>
           ) : (
             <>
-              {isLoggedIn && (
-                <div className="mb-8">
-                  <h1 className="text-2xl font-bold mb-4">Raw 데이터를 업로드 해주세요</h1>
-                  <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 border border-white/10">
-                    <ExcelUploader onData={handleUpload} />
-                  </div>
-                </div>
-              )}
               {/* 카드 시각화 */}
               {/* 대시보드(홈): 전체 등락률, 쇼핑/플레이스 모두 보임 */}
               {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (rate ? (
@@ -472,27 +592,27 @@ export default function Home() {
                   const show = isLoggedIn ? rate : getCachedCorrectedRates('shopping', rate, correctionRange, 'shopping');
                   return (
                     <div className="mt-8">
-                      <h2 className="font-semibold mb-4 text-white">쇼핑 전체 등락률</h2>
+                      <h2 className="font-semibold mb-4 text-white">쇼핑 전체 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
-                          <span className="text-3xl font-bold">{show.상승.toFixed(1)}%</span>
+                          <span className="text-3xl font-bold">{show?.상승 !== undefined ? show.상승.toFixed(1) + '%' : '-'}</span>
                           {isLoggedIn && (
-                            <span className="text-sm text-gray-400">{show.상승_개수}개</span>
+                            <span className="text-sm text-gray-400">{show?.상승_개수 ?? '-'}개</span>
                           )}
                         </div>
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-blue-400">유지</span>
-                          <span className="text-3xl font-bold">{show.유지.toFixed(1)}%</span>
+                          <span className="text-3xl font-bold">{show?.유지 !== undefined ? show.유지.toFixed(1) + '%' : '-'}</span>
                           {isLoggedIn && (
-                            <span className="text-sm text-gray-400">{show.유지_개수}개</span>
+                            <span className="text-sm text-gray-400">{show?.유지_개수 ?? '-'}개</span>
                           )}
                         </div>
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-red-400">하락</span>
-                          <span className="text-3xl font-bold">{show.하락.toFixed(1)}%</span>
+                          <span className="text-3xl font-bold">{show?.하락 !== undefined ? show.하락.toFixed(1) + '%' : '-'}</span>
                           {isLoggedIn && (
-                            <span className="text-sm text-gray-400">{show.하락_개수}개</span>
+                            <span className="text-sm text-gray-400">{show?.하락_개수 ?? '-'}개</span>
                           )}
                         </div>
                       </div>
@@ -507,7 +627,7 @@ export default function Home() {
                   const showSingle = isLoggedIn ? singleRate : getCachedCorrectedRates('shoppingSingle', singleRate, correctionRange, 'shoppingSingle');
                   return (
                     <div className="mt-6">
-                      <h2 className="font-semibold mb-2">쇼핑[단일] 등락률</h2>
+                      <h2 className="font-semibold mb-2">쇼핑[단일] 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
@@ -540,7 +660,7 @@ export default function Home() {
                   const showCompare = isLoggedIn ? compareRate : getCachedCorrectedRates('shoppingCompare', compareRate, correctionRange, 'shoppingCompare');
                   return (
                     <div className="mt-6">
-                      <h2 className="font-semibold mb-2">쇼핑[가격비교] 등락률</h2>
+                      <h2 className="font-semibold mb-2">쇼핑[가격비교] 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
@@ -573,7 +693,7 @@ export default function Home() {
                   const showPlace = isLoggedIn ? placeRate : getCachedCorrectedRates('place', placeRate, correctionRange, 'place');
                   return (
                     <div className="mt-8">
-                      <h2 className="font-semibold mb-4 text-white">플레이스 전체 등락률</h2>
+                      <h2 className="font-semibold mb-4 text-white">플레이스 전체 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
@@ -606,7 +726,7 @@ export default function Home() {
                   const showQuiz = isLoggedIn ? quizRate : getCachedCorrectedRates('quiz', quizRate, correctionRange, 'quiz');
                   return (
                     <div className="mt-6">
-                      <h2 className="font-semibold mb-2">플레이스 퀴즈 등락률</h2>
+                      <h2 className="font-semibold mb-2">플레이스 퀴즈 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
@@ -639,7 +759,7 @@ export default function Home() {
                   const showSave = isLoggedIn ? saveRate : getCachedCorrectedRates('placeSave', saveRate, correctionRange, 'placeSave');
                   return (
                     <div className="mt-6">
-                      <h2 className="font-semibold mb-2">플레이스 저장 등락률</h2>
+                      <h2 className="font-semibold mb-2">플레이스 저장 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
@@ -672,7 +792,7 @@ export default function Home() {
                   const showSave2 = isLoggedIn ? save2Rate : getCachedCorrectedRates('placeSave2', save2Rate, correctionRange, 'placeSave2');
                   return (
                     <div className="mt-6">
-                      <h2 className="font-semibold mb-2">플레이스 저장x2 등락률</h2>
+                      <h2 className="font-semibold mb-2">플레이스 저장x2 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
@@ -705,7 +825,7 @@ export default function Home() {
                   const showKeep = isLoggedIn ? keepRate : getCachedCorrectedRates('placeKeep', keepRate, correctionRange, 'placeKeep');
                   return (
                     <div className="mt-6">
-                      <h2 className="font-semibold mb-2">플레이스 KEEP 등락률</h2>
+                      <h2 className="font-semibold mb-2">플레이스 KEEP 등락률<sup className="ml-1 text-xs text-gray-400 align-super">(어제대비)</sup></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
                           <span className="text-lg font-bold text-green-400">상승</span>
