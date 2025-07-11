@@ -105,32 +105,31 @@ export default function Home() {
     if (!fact) return null;
     // typeKey: 'shopping', 'shoppingSingle', ...
     // correction: correctionRange
-    const keys = ['상승', '유지', '하락'];
-    const typeMap = { '상승': 'Rise', '유지': 'Keep', '하락': 'Fall' };
-    // 1. 팩트 값 배열
-    const factArr = keys.map(k => fact[k]);
-    // 2. 보정 구간
-    const min = correction?.[`${typeKey}RiseMin`] ?? 0;
-    const max = correction?.[`${typeKey}RiseMax`] ?? 100;
-    // 3. 보정 적용
+    // 1. 보정 구간
+    const riseMin = correction?.[`${typeKey}RiseMin`] ?? 0;
+    const riseMax = correction?.[`${typeKey}RiseMax`] ?? 100;
+    const fallMin = correction?.[`${typeKey}FallMin`] ?? 0;
+    const fallMax = correction?.[`${typeKey}FallMax`] ?? 100;
+    // 2. 상승 보정
     let rise = fact['상승'];
-    if (rise < min || rise > max) {
-      // 구간 내 랜덤+노이즈
-      const base = Math.random() * (max - min) + min;
-      rise = Math.round((base + (Math.random() - 0.5) * 2) * 10) / 10; // 소수점 1자리 노이즈
-      rise = Math.max(min, Math.min(max, rise));
+    if (rise < riseMin || rise > riseMax) {
+      const base = Math.random() * (riseMax - riseMin) + riseMin;
+      rise = Math.round((base + (Math.random() - 0.5) * 2) * 10) / 10;
+      rise = Math.max(riseMin, Math.min(riseMax, rise));
     }
-    // 4. 나머지 비율 분배
-    const rest = 100 - rise;
-    const keepFact = fact['유지'];
-    const fallFact = fact['하락'];
-    const sumRest = keepFact + fallFact;
-    let keep = sumRest > 0 ? Math.round((rest * keepFact / sumRest) * 10) / 10 : Math.round(rest / 2 * 10) / 10;
-    let fall = Math.round((rest - keep) * 10) / 10;
+    // 3. 하락 보정
+    let fall = fact['하락'];
+    if (fall < fallMin || fall > fallMax) {
+      const base = Math.random() * (fallMax - fallMin) + fallMin;
+      fall = Math.round((base + (Math.random() - 0.5) * 2) * 10) / 10;
+      fall = Math.max(fallMin, Math.min(fallMax, fall));
+    }
+    // 4. 유지 자동 계산
+    let keep = Math.round((100 - rise - fall) * 10) / 10;
     // 소수점 오차 보정
     const total = Math.round((rise + keep + fall) * 10) / 10;
     if (total !== 100) {
-      fall += 100 - total;
+      keep += 100 - total;
     }
     return { '상승': rise, '유지': keep, '하락': fall, '상승_개수': fact['상승_개수'], '유지_개수': fact['유지_개수'], '하락_개수': fact['하락_개수'] };
   }
