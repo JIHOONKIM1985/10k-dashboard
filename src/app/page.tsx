@@ -76,6 +76,15 @@ export default function Home() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      const savedLogin = localStorage.getItem('isLoggedIn');
+      if (savedLogin === 'true') {
+        setIsLoggedIn(true);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
       const saved = localStorage.getItem('correctionRange');
       if (saved) setCorrectionRange(JSON.parse(saved));
       else setCorrectionRange({
