@@ -736,6 +736,7 @@ export default function Home() {
               {/* 표: 메뉴에 따라 쇼핑/플레이스 표만 보이게 */}
               {(activeMenu === 'dashboard' || activeMenu === 'shopping') && shoppingList && shoppingList.length > 0 ? (
                 <div className="rounded-2xl shadow-lg bg-[#18181b] mt-8 border border-white/10">
+                  <div className="text-xl font-semibold mb-4 text-white">네이버 쇼핑 데이터</div>
                   <div className="max-h-[700px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#232329] scrollbar-track-[#18181b]">
                     <table className="w-full rounded-2xl">
                       <thead>
@@ -745,6 +746,7 @@ export default function Home() {
                             <th
                               key={idx}
                               className={`bg-[#232329] text-[#e4e4e7] font-semibold text-xs px-2 py-3 whitespace-nowrap text-center min-w-0 ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === shoppingDashboardHeader.length - 2 ? 'rounded-tr-2xl' : ''}`}
+                              style={{ position: 'sticky', top: 0, zIndex: 2 }}
                             >
                               {header}
                             </th>
@@ -813,6 +815,7 @@ export default function Home() {
               {(activeMenu === 'dashboard' || activeMenu === 'place') && (
                 placeList && placeList.length > 0 ? (
                   <div className="rounded-2xl shadow-lg bg-[#18181b] mt-8 border border-white/10">
+                    <div className="text-xl font-semibold mb-4 text-white">네이버 플레이스 데이터</div>
                     <div className="max-h-[700px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#232329] scrollbar-track-[#18181b]">
                       <table className="w-full rounded-2xl">
                         <thead>
@@ -822,6 +825,7 @@ export default function Home() {
                               <th
                                 key={idx}
                                 className={`bg-[#232329] text-[#e4e4e7] font-semibold text-xs px-2 py-3 whitespace-nowrap text-center min-w-0 ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === placeDashboardHeader.length - 2 ? 'rounded-tr-2xl' : ''}`}
+                                style={{ position: 'sticky', top: 0, zIndex: 2 }}
                               >
                                 {header}
                               </th>
