@@ -735,93 +735,15 @@ export default function Home() {
               )}
               {/* 표: 메뉴에 따라 쇼핑/플레이스 표만 보이게 */}
               {(activeMenu === 'dashboard' || activeMenu === 'shopping') && shoppingList && shoppingList.length > 0 ? (
-                <div className="rounded-2xl shadow-lg bg-[#18181b] mt-8 border border-white/10">
-                  <div className="text-lg font-semibold mb-4 text-white">네이버 쇼핑 데이터</div>
-                  <div className="max-h-[700px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#232329] scrollbar-track-[#18181b]">
-                    <table className="w-full">
-                      <thead>
-                        <tr>
-                          {/* 쇼핑 표 헤더 */}
-                          {shoppingDashboardHeader.slice(0, -1).map((header, idx) => (
-                            <th
-                              key={idx}
-                              className={`bg-[#232329] text-[#e4e4e7] font-semibold text-xs px-2 py-3 whitespace-nowrap text-center min-w-0`}
-                              style={{ position: 'sticky', top: 0, zIndex: 2 }}
-                            >
-                              {header}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {shoppingList.slice(0, 200).map((row, i) => (
-                          <tr key={i} className="border-b border-[#232329] last:rounded-b-2xl">
-                            {row.slice(0, -1).map((cell, j) => {
-                              // 신규진입 열이면 0→'기존', 1→'신규진입'으로 표시
-                              const isNewEntryCol = shoppingDashboardHeader[j] === '신규진입';
-                              let cellStr = String(cell);
-                              if (isNewEntryCol) {
-                                if (cellStr === '0') cellStr = '기존';
-                                else if (cellStr === '1') cellStr = '신규진입';
-                              }
-                              const tokens = cellStr.split(/\s|,|\//).filter(Boolean);
-                              if (tokens.length > 1) {
-                                return (
-                                  <td key={j} className={`bg-[#18181b] text-[#e4e4e7] text-sm px-4 py-2 whitespace-nowrap text-center min-w-0 ${j === 0 ? 'rounded-bl-2xl' : ''} ${j === row.length - 1 ? 'rounded-br-2xl' : ''}`}>
-                                    {tokens.map((token, idx) => {
-                                      if (/^-[0-9.]+$/.test(token)) {
-                                        return <span key={idx} className="text-red-500 font-bold mr-1">▲{token.slice(1)}</span>;
-                                      } else if (token === "-") {
-                                        return <span key={idx} className="mr-1">-</span>;
-                                      } else if (/^\+[0-9.]+$/.test(token)) {
-                                        return <span key={idx} className="text-blue-500 font-bold mr-1">▼{token.slice(1)}</span>;
-                                      } else if (token === "0" || token === "0.0" || token === "0.00") {
-                                        return <span key={idx} className="mr-1">{token}</span>;
-                                      } else {
-                                        return <span key={idx} className="mr-1">{token}</span>;
-                                      }
-                                    })}
-                                  </td>
-                                );
-                              } else if (/^-[0-9.]+$/.test(cellStr)) {
-                                return (
-                                  <td key={j} className={`bg-[#18181b] text-[#e4e4e7] text-sm px-4 py-2 whitespace-nowrap text-center min-w-0 ${j === 0 ? 'rounded-bl-2xl' : ''} ${j === row.length - 1 ? 'rounded-br-2xl' : ''}`}><span className="text-red-500 font-bold">▲{cellStr.slice(1)}</span></td>
-                                );
-                              } else if (cellStr === "-") {
-                                return (
-                                  <td key={j} className={`bg-[#18181b] text-[#e4e4e7] text-sm px-4 py-2 whitespace-nowrap text-center min-w-0 ${j === 0 ? 'rounded-bl-2xl' : ''} ${j === row.length - 1 ? 'rounded-br-2xl' : ''}`}>-</td>
-                                );
-                              } else if (/^\+[0-9.]+$/.test(cellStr)) {
-                                return (
-                                  <td key={j} className={`bg-[#18181b] text-[#e4e4e7] text-sm px-4 py-2 whitespace-nowrap text-center min-w-0 ${j === 0 ? 'rounded-bl-2xl' : ''} ${j === row.length - 1 ? 'rounded-br-2xl' : ''}`}><span className="text-blue-500 font-bold">▼{cellStr.slice(1)}</span></td>
-                                );
-                              } else {
-                                return (
-                                  <td key={j} className={`bg-[#18181b] text-[#e4e4e7] text-xs px-4 py-2 whitespace-nowrap text-center min-w-0 ${j === 0 ? 'rounded-bl-2xl' : ''} ${j === row.length - 1 ? 'rounded-br-2xl' : ''}`}>{cellStr}</td>
-                                );
-                              }
-                            })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ) : (
-                (activeMenu === 'dashboard' || activeMenu === 'shopping') && (
-                  <div className="mt-8 text-center text-gray-400">데이터가 없습니다.</div>
-                )
-              )}
-              {(activeMenu === 'dashboard' || activeMenu === 'place') && (
-                placeList && placeList.length > 0 ? (
-                  <div className="rounded-2xl shadow-lg bg-[#18181b] mt-8 border border-white/10">
-                    <div className="text-lg font-semibold mb-4 text-white">네이버 플레이스 데이터</div>
+                <>
+                  <div className="text-lg font-semibold mt-12 mb-4 text-white">네이버 쇼핑 데이터</div>
+                  <div className="rounded-2xl shadow-lg bg-[#18181b] mt-0 border border-white/10">
                     <div className="max-h-[700px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#232329] scrollbar-track-[#18181b]">
-                      <table className="w-full">
+                      <table className="w-full rounded-2xl">
                         <thead>
                           <tr>
-                            {/* 플레이스 표 헤더 */}
-                            {placeDashboardHeader.slice(0, -1).map((header, idx) => (
+                            {/* 쇼핑 표 헤더 */}
+                            {shoppingDashboardHeader.slice(0, -1).map((header, idx) => (
                               <th
                                 key={idx}
                                 className={`bg-[#232329] text-[#e4e4e7] font-semibold text-xs px-2 py-3 whitespace-nowrap text-center min-w-0`}
@@ -833,11 +755,11 @@ export default function Home() {
                           </tr>
                         </thead>
                         <tbody>
-                          {placeList.slice(0, 200).map((row, i) => (
+                          {shoppingList.slice(0, 200).map((row, i) => (
                             <tr key={i} className="border-b border-[#232329] last:rounded-b-2xl">
                               {row.slice(0, -1).map((cell, j) => {
                                 // 신규진입 열이면 0→'기존', 1→'신규진입'으로 표시
-                                const isNewEntryCol = placeDashboardHeader[j] === '신규진입';
+                                const isNewEntryCol = shoppingDashboardHeader[j] === '신규진입';
                                 let cellStr = String(cell);
                                 if (isNewEntryCol) {
                                   if (cellStr === '0') cellStr = '기존';
@@ -886,6 +808,88 @@ export default function Home() {
                       </table>
                     </div>
                   </div>
+                </>
+              ) : (
+                (activeMenu === 'dashboard' || activeMenu === 'shopping') && (
+                  <div className="mt-8 text-center text-gray-400">데이터가 없습니다.</div>
+                )
+              )}
+              {(activeMenu === 'dashboard' || activeMenu === 'place') && (
+                placeList && placeList.length > 0 ? (
+                  <>
+                    <div className="text-lg font-semibold mt-12 mb-4 text-white">네이버 플레이스 데이터</div>
+                    <div className="rounded-2xl shadow-lg bg-[#18181b] mt-0 border border-white/10">
+                      <div className="max-h-[700px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#232329] scrollbar-track-[#18181b]">
+                        <table className="w-full rounded-2xl">
+                          <thead>
+                            <tr>
+                              {/* 플레이스 표 헤더 */}
+                              {placeDashboardHeader.slice(0, -1).map((header, idx) => (
+                                <th
+                                  key={idx}
+                                  className={`bg-[#232329] text-[#e4e4e7] font-semibold text-xs px-2 py-3 whitespace-nowrap text-center min-w-0`}
+                                  style={{ position: 'sticky', top: 0, zIndex: 2 }}
+                                >
+                                  {header}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {placeList.slice(0, 200).map((row, i) => (
+                              <tr key={i} className="border-b border-[#232329] last:rounded-b-2xl">
+                                {row.slice(0, -1).map((cell, j) => {
+                                  // 신규진입 열이면 0→'기존', 1→'신규진입'으로 표시
+                                  const isNewEntryCol = placeDashboardHeader[j] === '신규진입';
+                                  let cellStr = String(cell);
+                                  if (isNewEntryCol) {
+                                    if (cellStr === '0') cellStr = '기존';
+                                    else if (cellStr === '1') cellStr = '신규진입';
+                                  }
+                                  const tokens = cellStr.split(/\s|,|\//).filter(Boolean);
+                                  if (tokens.length > 1) {
+                                    return (
+                                      <td key={j} className={`bg-[#18181b] text-[#e4e4e7] text-sm px-4 py-2 whitespace-nowrap text-center min-w-0 ${j === 0 ? 'rounded-bl-2xl' : ''} ${j === row.length - 1 ? 'rounded-br-2xl' : ''}`}>
+                                        {tokens.map((token, idx) => {
+                                          if (/^-[0-9.]+$/.test(token)) {
+                                            return <span key={idx} className="text-red-500 font-bold mr-1">▲{token.slice(1)}</span>;
+                                          } else if (token === "-") {
+                                            return <span key={idx} className="mr-1">-</span>;
+                                          } else if (/^\+[0-9.]+$/.test(token)) {
+                                            return <span key={idx} className="text-blue-500 font-bold mr-1">▼{token.slice(1)}</span>;
+                                          } else if (token === "0" || token === "0.0" || token === "0.00") {
+                                            return <span key={idx} className="mr-1">{token}</span>;
+                                          } else {
+                                            return <span key={idx} className="mr-1">{token}</span>;
+                                          }
+                                        })}
+                                      </td>
+                                    );
+                                  } else if (/^-[0-9.]+$/.test(cellStr)) {
+                                    return (
+                                      <td key={j} className={`bg-[#18181b] text-[#e4e4e7] text-sm px-4 py-2 whitespace-nowrap text-center min-w-0 ${j === 0 ? 'rounded-bl-2xl' : ''} ${j === row.length - 1 ? 'rounded-br-2xl' : ''}`}><span className="text-red-500 font-bold">▲{cellStr.slice(1)}</span></td>
+                                    );
+                                  } else if (cellStr === "-") {
+                                    return (
+                                      <td key={j} className={`bg-[#18181b] text-[#e4e4e7] text-sm px-4 py-2 whitespace-nowrap text-center min-w-0 ${j === 0 ? 'rounded-bl-2xl' : ''} ${j === row.length - 1 ? 'rounded-br-2xl' : ''}`}>-</td>
+                                    );
+                                  } else if (/^\+[0-9.]+$/.test(cellStr)) {
+                                    return (
+                                      <td key={j} className={`bg-[#18181b] text-[#e4e4e7] text-sm px-4 py-2 whitespace-nowrap text-center min-w-0 ${j === 0 ? 'rounded-bl-2xl' : ''} ${j === row.length - 1 ? 'rounded-br-2xl' : ''}`}><span className="text-blue-500 font-bold">▼{cellStr.slice(1)}</span></td>
+                                    );
+                                  } else {
+                                    return (
+                                      <td key={j} className={`bg-[#18181b] text-[#e4e4e7] text-xs px-4 py-2 whitespace-nowrap text-center min-w-0 ${j === 0 ? 'rounded-bl-2xl' : ''} ${j === row.length - 1 ? 'rounded-br-2xl' : ''}`}>{cellStr}</td>
+                                    );
+                                  }
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
                 ) : (
                   <div className="mt-8 text-center text-gray-400">데이터가 없습니다.</div>
                 )
