@@ -211,9 +211,12 @@ export default function Home() {
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
   const pad = (n: number) => n.toString().padStart(2, '0');
+  const week = ['일', '월', '화', '수', '목', '금', '토'];
   const formatDate = (date: Date) => `${pad(date.getMonth() + 1)}월 ${pad(date.getDate())}일`;
+  const formatFullDate = (date: Date) => `${date.getFullYear()}년 ${pad(date.getMonth() + 1)}월 ${pad(date.getDate())}일 ${week[date.getDay()]}요일`;
   const todayStr = formatDate(today);
   const yesterdayStr = formatDate(yesterday);
+  const todayFullStr = formatFullDate(today);
 
   // 쇼핑 대시보드 헤더
   const shoppingDashboardHeader = [
@@ -257,7 +260,8 @@ export default function Home() {
             </span>
           </div>
           <div className="text-2xl font-bold mb-8">10K Dashboard</div>
-          <div className="text-base text-gray-300 mb-8">{todayStr}</div>
+          <div className="text-lg font-bold mb-2">{todayFullStr}</div>
+          <div className="pl-6 py-1 text-left text-gray-400 mb-6">오늘도 좋은 하루 되세요.</div>
           <nav className="flex flex-col gap-2">
             <button
               className={`text-lg font-bold text-left mb-2 ${activeMenu === 'dashboard' ? 'text-white' : 'text-gray-400'}`}
