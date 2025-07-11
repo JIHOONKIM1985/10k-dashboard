@@ -250,6 +250,43 @@ export default function Home() {
   return (
     <div className="w-full min-h-screen bg-black">
       <div className="flex justify-center min-h-screen">
+        {/* 로그인 모달 */}
+        {showLogin && (
+          <form
+            onSubmit={handleLogin}
+            className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
+          >
+            <div className="bg-[#232329] rounded-2xl p-8 shadow-lg flex flex-col gap-4 min-w-[320px]">
+              <div className="text-xl font-bold mb-2 text-white">관리자 로그인</div>
+              <input
+                className="px-4 py-2 rounded bg-[#18181b] text-white border border-white/10 outline-none"
+                placeholder="ID"
+                value={loginId}
+                onChange={e => setLoginId(e.target.value)}
+              />
+              <input
+                className="px-4 py-2 rounded bg-[#18181b] text-white border border-white/10 outline-none"
+                placeholder="PW"
+                type="password"
+                value={loginPw}
+                onChange={e => setLoginPw(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 rounded bg-green-500 text-white font-bold"
+              >
+                로그인
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 rounded bg-gray-500 text-white font-bold"
+                onClick={() => setShowLogin(false)}
+              >
+                취소
+              </button>
+            </div>
+          </form>
+        )}
         {/* 사이드바 */}
         <aside className="w-80 flex-shrink-0 bg-[#18181b] rounded-2xl shadow-lg text-white flex flex-col p-6 mt-8 h-fit sticky top-8 self-start border border-white/10">
           {/* 사이드바 상단에 로그인 상태 뱃지 추가 */}
@@ -260,8 +297,7 @@ export default function Home() {
             </span>
           </div>
           <div className="text-2xl font-bold mb-8">10K Dashboard</div>
-          <div className="text-lg font-bold mb-2">{todayFullStr}</div>
-          <div className="pl-6 py-1 text-left text-gray-400 mb-6">오늘도 좋은 하루 되세요.</div>
+          <div className="pl-6 py-1 text-left text-gray-400 mb-6">{todayFullStr}</div>
           <nav className="flex flex-col gap-2">
             <button
               className={`text-lg font-bold text-left mb-2 ${activeMenu === 'dashboard' ? 'text-white' : 'text-gray-400'}`}
