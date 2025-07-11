@@ -495,201 +495,235 @@ export default function Home() {
                 <div className="mt-8 text-center text-gray-400">데이터가 없습니다.</div>
               ))}
               {(activeMenu === 'dashboard' || activeMenu === 'shopping') && singleRate && (
-                <div className="mt-6">
-                  <h2 className="font-semibold mb-2">쇼핑[단일] 등락률</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-green-400">상승</span>
-                      <span className="text-3xl font-bold">{singleRate.상승.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{singleRate.상승_개수}개</span>
-                      )}
+                (() => {
+                  const showSingle = isLoggedIn ? singleRate : getCachedCorrectedRates('shoppingSingle', singleRate, correctionRange, 'shoppingSingle');
+                  return (
+                    <div className="mt-6">
+                      <h2 className="font-semibold mb-2">쇼핑[단일] 등락률</h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-green-400">상승</span>
+                          <span className="text-3xl font-bold">{showSingle.상승.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showSingle.상승_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-blue-400">유지</span>
+                          <span className="text-3xl font-bold">{showSingle.유지.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showSingle.유지_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-red-400">하락</span>
+                          <span className="text-3xl font-bold">{showSingle.하락.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showSingle.하락_개수}개</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-blue-400">유지</span>
-                      <span className="text-3xl font-bold">{singleRate.유지.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{singleRate.유지_개수}개</span>
-                      )}
-                    </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-red-400">하락</span>
-                      <span className="text-3xl font-bold">{singleRate.하락.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{singleRate.하락_개수}개</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()
               )}
               {(activeMenu === 'dashboard' || activeMenu === 'shopping') && compareRate && (
-                <div className="mt-6">
-                  <h2 className="font-semibold mb-2">쇼핑[가격비교] 등락률</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-green-400">상승</span>
-                      <span className="text-3xl font-bold">{compareRate.상승.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{compareRate.상승_개수}개</span>
-                      )}
+                (() => {
+                  const showCompare = isLoggedIn ? compareRate : getCachedCorrectedRates('shoppingCompare', compareRate, correctionRange, 'shoppingCompare');
+                  return (
+                    <div className="mt-6">
+                      <h2 className="font-semibold mb-2">쇼핑[가격비교] 등락률</h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-green-400">상승</span>
+                          <span className="text-3xl font-bold">{showCompare.상승.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showCompare.상승_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-blue-400">유지</span>
+                          <span className="text-3xl font-bold">{showCompare.유지.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showCompare.유지_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-red-400">하락</span>
+                          <span className="text-3xl font-bold">{showCompare.하락.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showCompare.하락_개수}개</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-blue-400">유지</span>
-                      <span className="text-3xl font-bold">{compareRate.유지.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{compareRate.유지_개수}개</span>
-                      )}
-                    </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-red-400">하락</span>
-                      <span className="text-3xl font-bold">{compareRate.하락.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{compareRate.하락_개수}개</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()
               )}
-              {/* 플레이스 등락률 */}
               {(activeMenu === 'dashboard' || activeMenu === 'place') && placeRate && (
-                <div className="mt-8">
-                  <h2 className="font-semibold mb-4 text-white">플레이스 전체 등락률</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-green-400">상승</span>
-                      <span className="text-3xl font-bold">{placeRate.상승.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{placeRate.상승_개수}개</span>
-                      )}
+                (() => {
+                  const showPlace = isLoggedIn ? placeRate : getCachedCorrectedRates('place', placeRate, correctionRange, 'place');
+                  return (
+                    <div className="mt-8">
+                      <h2 className="font-semibold mb-4 text-white">플레이스 전체 등락률</h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-green-400">상승</span>
+                          <span className="text-3xl font-bold">{showPlace.상승.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showPlace.상승_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-blue-400">유지</span>
+                          <span className="text-3xl font-bold">{showPlace.유지.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showPlace.유지_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-red-400">하락</span>
+                          <span className="text-3xl font-bold">{showPlace.하락.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showPlace.하락_개수}개</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-blue-400">유지</span>
-                      <span className="text-3xl font-bold">{placeRate.유지.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{placeRate.유지_개수}개</span>
-                      )}
-                    </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-red-400">하락</span>
-                      <span className="text-3xl font-bold">{placeRate.하락.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{placeRate.하락_개수}개</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()
               )}
               {(activeMenu === 'dashboard' || activeMenu === 'place') && quizRate && (
-                <div className="mt-6">
-                  <h2 className="font-semibold mb-2">플레이스퀴즈 등락률</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-green-400">상승</span>
-                      <span className="text-3xl font-bold">{quizRate.상승.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{quizRate.상승_개수}개</span>
-                      )}
+                (() => {
+                  const showQuiz = isLoggedIn ? quizRate : getCachedCorrectedRates('quiz', quizRate, correctionRange, 'quiz');
+                  return (
+                    <div className="mt-6">
+                      <h2 className="font-semibold mb-2">플레이스 퀴즈 등락률</h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-green-400">상승</span>
+                          <span className="text-3xl font-bold">{showQuiz.상승.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showQuiz.상승_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-blue-400">유지</span>
+                          <span className="text-3xl font-bold">{showQuiz.유지.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showQuiz.유지_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-red-400">하락</span>
+                          <span className="text-3xl font-bold">{showQuiz.하락.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showQuiz.하락_개수}개</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-blue-400">유지</span>
-                      <span className="text-3xl font-bold">{quizRate.유지.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{quizRate.유지_개수}개</span>
-                      )}
-                    </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-red-400">하락</span>
-                      <span className="text-3xl font-bold">{quizRate.하락.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{quizRate.하락_개수}개</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()
               )}
               {(activeMenu === 'dashboard' || activeMenu === 'place') && saveRate && (
-                <div className="mt-6">
-                  <h2 className="font-semibold mb-2">플레이스 저장 등락률</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-green-400">상승</span>
-                      <span className="text-3xl font-bold">{saveRate.상승.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{saveRate.상승_개수}개</span>
-                      )}
+                (() => {
+                  const showSave = isLoggedIn ? saveRate : getCachedCorrectedRates('placeSave', saveRate, correctionRange, 'placeSave');
+                  return (
+                    <div className="mt-6">
+                      <h2 className="font-semibold mb-2">플레이스 저장 등락률</h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-green-400">상승</span>
+                          <span className="text-3xl font-bold">{showSave.상승.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showSave.상승_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-blue-400">유지</span>
+                          <span className="text-3xl font-bold">{showSave.유지.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showSave.유지_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-red-400">하락</span>
+                          <span className="text-3xl font-bold">{showSave.하락.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showSave.하락_개수}개</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-blue-400">유지</span>
-                      <span className="text-3xl font-bold">{saveRate.유지.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{saveRate.유지_개수}개</span>
-                      )}
-                    </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-red-400">하락</span>
-                      <span className="text-3xl font-bold">{saveRate.하락.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{saveRate.하락_개수}개</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()
               )}
               {(activeMenu === 'dashboard' || activeMenu === 'place') && save2Rate && (
-                <div className="mt-6">
-                  <h2 className="font-semibold mb-2">플레이스 저장x2 등락률</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-green-400">상승</span>
-                      <span className="text-3xl font-bold">{save2Rate.상승.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{save2Rate.상승_개수}개</span>
-                      )}
+                (() => {
+                  const showSave2 = isLoggedIn ? save2Rate : getCachedCorrectedRates('placeSave2', save2Rate, correctionRange, 'placeSave2');
+                  return (
+                    <div className="mt-6">
+                      <h2 className="font-semibold mb-2">플레이스 저장x2 등락률</h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-green-400">상승</span>
+                          <span className="text-3xl font-bold">{showSave2.상승.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showSave2.상승_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-blue-400">유지</span>
+                          <span className="text-3xl font-bold">{showSave2.유지.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showSave2.유지_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-red-400">하락</span>
+                          <span className="text-3xl font-bold">{showSave2.하락.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showSave2.하락_개수}개</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-blue-400">유지</span>
-                      <span className="text-3xl font-bold">{save2Rate.유지.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{save2Rate.유지_개수}개</span>
-                      )}
-                    </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-red-400">하락</span>
-                      <span className="text-3xl font-bold">{save2Rate.하락.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{save2Rate.하락_개수}개</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()
               )}
               {(activeMenu === 'dashboard' || activeMenu === 'place') && keepRate && (
-                <div className="mt-6">
-                  <h2 className="font-semibold mb-2">플레이스 KEEP 등락률</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-green-400">상승</span>
-                      <span className="text-3xl font-bold">{keepRate.상승.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{keepRate.상승_개수}개</span>
-                      )}
+                (() => {
+                  const showKeep = isLoggedIn ? keepRate : getCachedCorrectedRates('placeKeep', keepRate, correctionRange, 'placeKeep');
+                  return (
+                    <div className="mt-6">
+                      <h2 className="font-semibold mb-2">플레이스 KEEP 등락률</h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-green-400">상승</span>
+                          <span className="text-3xl font-bold">{showKeep.상승.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showKeep.상승_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-blue-400">유지</span>
+                          <span className="text-3xl font-bold">{showKeep.유지.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showKeep.유지_개수}개</span>
+                          )}
+                        </div>
+                        <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
+                          <span className="text-lg font-bold text-red-400">하락</span>
+                          <span className="text-3xl font-bold">{showKeep.하락.toFixed(1)}%</span>
+                          {isLoggedIn && (
+                            <span className="text-sm text-gray-400">{showKeep.하락_개수}개</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-blue-400">유지</span>
-                      <span className="text-3xl font-bold">{keepRate.유지.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{keepRate.유지_개수}개</span>
-                      )}
-                    </div>
-                    <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 flex flex-col items-center text-white border border-white/10">
-                      <span className="text-lg font-bold text-red-400">하락</span>
-                      <span className="text-3xl font-bold">{keepRate.하락.toFixed(1)}%</span>
-                      {isLoggedIn && (
-                        <span className="text-sm text-gray-400">{keepRate.하락_개수}개</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()
               )}
               {/* 표: 메뉴에 따라 쇼핑/플레이스 표만 보이게 */}
               {(activeMenu === 'dashboard' || activeMenu === 'shopping') && shoppingList && shoppingList.length > 0 ? (
