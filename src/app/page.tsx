@@ -39,7 +39,6 @@ export default function Home() {
   const [activeHandle, setActiveHandle] = useState<string | null>(null);
 
   useEffect(() => {
-    // Firestore에서 업로드 데이터 불러오기
     loadUploadData().then(data => {
       if (data) {
         setRawData(data.rawData || []);
@@ -54,9 +53,22 @@ export default function Home() {
         setKeepRate(data.keepRate || null);
         setShoppingList(data.shoppingList || []);
         setPlaceList(data.placeList || []);
+      } else {
+        // Firestore에 데이터가 없을 때 기본값 세팅 (또는 안내 메시지)
+        setRawData([]);
+        setTempData([]);
+        setRate(null);
+        setSingleRate(null);
+        setCompareRate(null);
+        setPlaceRate(null);
+        setQuizRate(null);
+        setSaveRate(null);
+        setSave2Rate(null);
+        setKeepRate(null);
+        setShoppingList([]);
+        setPlaceList([]);
       }
     });
-    // Firestore에서 보정치 불러오기
     loadAdjustment().then(data => {
       if (data) setCorrectionRange(data);
     });
@@ -446,7 +458,7 @@ export default function Home() {
               )}
               {/* 카드 시각화 */}
               {/* 대시보드(홈): 전체 등락률, 쇼핑/플레이스 모두 보임 */}
-              {(activeMenu === 'dashboard' || activeMenu === 'shopping') && rate && (
+              {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (rate ? (
                 (() => {
                   const show = isLoggedIn ? rate : getCachedCorrectedRates('shopping', rate, correctionRange, 'shopping');
                   return (
@@ -478,7 +490,9 @@ export default function Home() {
                     </div>
                   );
                 })()
-              )}
+              ) : (
+                <div className="mt-8 text-center text-gray-400">데이터가 없습니다.</div>
+              ))}
               {(activeMenu === 'dashboard' || activeMenu === 'shopping') && singleRate && (
                 <div className="mt-6">
                   <h2 className="font-semibold mb-2">쇼핑[단일] 등락률</h2>
@@ -677,7 +691,7 @@ export default function Home() {
                 </div>
               )}
               {/* 표: 메뉴에 따라 쇼핑/플레이스 표만 보이게 */}
-              {(activeMenu === 'dashboard' || activeMenu === 'shopping') && shoppingList && shoppingList.length > 0 && (
+              {(activeMenu === 'dashboard' || activeMenu === 'shopping') && shoppingList && shoppingList.length > 0 ? (
                 <div className="rounded-2xl shadow-lg bg-[#18181b] mt-8 border border-white/10">
                   <div className="max-h-[700px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#232329] scrollbar-track-[#18181b]">
                     <table className="w-full rounded-2xl">
@@ -748,8 +762,10 @@ export default function Home() {
                     </table>
                   </div>
                 </div>
+              ) : (
+                <div className="mt-8 text-center text-gray-400">데이터가 없습니다.</div>
               )}
-              {(activeMenu === 'dashboard' || activeMenu === 'place') && placeList && placeList.length > 0 && (
+              {(activeMenu === 'dashboard' || activeMenu === 'place') && placeList && placeList.length > 0 ? (
                 <div className="rounded-2xl shadow-lg bg-[#18181b] mt-8 border border-white/10">
                   <div className="max-h-[700px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#232329] scrollbar-track-[#18181b]">
                     <table className="w-full rounded-2xl">
@@ -820,6 +836,8 @@ export default function Home() {
                     </table>
                   </div>
                 </div>
+              ) : (
+                <div className="mt-8 text-center text-gray-400">데이터가 없습니다.</div>
               )}
             </>
           )}
