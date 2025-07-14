@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import InitFirestore from "@/components/InitFirestore";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,9 +26,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="ko" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
       <body>
-        <InitFirestore />
+        {/* InitFirestore는 반드시 클라이언트 환경에서만 동작해야 함 (SSR에서 window/document 사용 금지) */}
         {children}
       </body>
     </html>
