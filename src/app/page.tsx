@@ -30,7 +30,7 @@ export default function Home() {
   const [keepRate, setKeepRate] = useState<any>(null);
   const [shoppingList, setShoppingList] = useState<any[][]>([]);
   const [placeList, setPlaceList] = useState<any[][]>([]);
-  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'shopping' | 'place'>('dashboard');
+  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'shopping' | 'place' | 'report'>('dashboard');
   const [showLogin, setShowLogin] = useState(false);
   const [loginId, setLoginId] = useState("");
   const [loginPw, setLoginPw] = useState("");
@@ -38,6 +38,18 @@ export default function Home() {
   const [showCorrectionSetting, setShowCorrectionSetting] = useState(false);
   const [correctionRange, setCorrectionRange] = useState<any>({});
   const [activeHandle, setActiveHandle] = useState<string | null>(null);
+  
+  // 리포트 발행용 관련 state
+  const [reportMultiInputs, setReportMultiInputs] = useState<Record<string, { keywordCount: string; channels: string[] }>>({});
+  const [reportInputs, setReportInputs] = useState<Record<string, { keywordCount: string; channel: string }>>({});
+  const [showRawPreview, setShowRawPreview] = useState(false);
+  const [reportHeader, setReportHeader] = useState<string[]>([]);
+  const [showRisePreview, setShowRisePreview] = useState(false);
+  const [reportDropdownOptions, setReportDropdownOptions] = useState<string[]>([]);
+  const [newOption, setNewOption] = useState("");
+  const [editOptionIdx, setEditOptionIdx] = useState<number|null>(null);
+  const [editOptionValue, setEditOptionValue] = useState("");
+  const [reportRows, setReportRows] = useState<any[]>([]);
 
   // 차트 상태 및 예시 데이터 (쇼핑/플레이스)
   const [periodType, setPeriodType] = useState<'day' | 'week' | 'month'>('day');
@@ -196,6 +208,100 @@ export default function Home() {
     }
   }, [correctionRange]);
 
+  // 리포트 데이터 localStorage에서 불러오기
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // 리포트 입력 데이터 불러오기
+      const savedInputs = localStorage.getItem('reportMultiInputs');
+      if (savedInputs) {
+        try {
+          setReportMultiInputs(JSON.parse(savedInputs));
+        } catch {
+          setReportMultiInputs({});
+        }
+      }
+      
+      // 유입경로 옵션 불러오기
+      const savedOptions = localStorage.getItem('reportDropdownOptions');
+      if (savedOptions) {
+        try {
+          setReportDropdownOptions(JSON.parse(savedOptions));
+        } catch {
+          setReportDropdownOptions(["가격비교검색", "통합검색"]);
+        }
+      } else {
+        setReportDropdownOptions(["가격비교검색", "통합검색"]);
+      }
+    }
+  }, []);
+
+  // 리포트 입력 데이터 변경 시 localStorage에 저장
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem('reportMultiInputs', JSON.stringify(reportMultiInputs));
+    }
+  }, [reportMultiInputs]);
+
+  // 옵션 변경 시 localStorage에 저장
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem('reportDropdownOptions', JSON.stringify(reportDropdownOptions));
+    }
+  }, [reportDropdownOptions]);
+
+  // 기존 reportInputs → reportMultiInputs로 대체
+  useEffect(() => {
+    const newInputs: Record<string, { keywordCount: string; channels: string[] }> = {};
+    reportRows.forEach(({ 광고ID, 슬롯ID }) => {
+      const key = `${광고ID}-${슬롯ID}`;
+      newInputs[key] = reportMultiInputs[key] || { keywordCount: "", channels: [] };
+    });
+    setReportMultiInputs(newInputs);
+    // eslint-disable-next-line
+  }, [reportRows]);
+
+  // 리포트 발행용 데이터 추출 (쇼핑[가격비교] TOP5) - Raw 데이터 기반으로 변경
+  useEffect(() => {
+    if (!rawData || rawData.length === 0) return;
+    const header = rawData[0];
+    setReportHeader(header);
+    const rows = rawData.slice(1);
+    const idx = (name: string) => findColumnIndex(header, name);
+    // 쇼핑(가격비교) 필터 + 숫자 유효성 검사 (상승 데이터 추적과 동일한 조건)
+    const filtered = rows.filter(row => 
+      row[idx("광고유형")] === "쇼핑(가격비교)" && 
+      !isNaN(Number(row[idx("D-Day")])) && 
+      !isNaN(Number(row[idx("최초순위")]))
+    );
+    
+    // 최초순위 - D-Day = 상승폭 (상승폭이 클수록 좋음)
+    const topRows = filtered
+      .map(row => {
+        const 최초순위 = Number(row[idx("최초순위")]) || 0;
+        const dday = Number(row[idx("D-Day")]) || 0;
+        const diff = 최초순위 - dday;
+        return {
+          row,
+          diff,
+          광고ID: row[idx("광고ID")] || '',
+          슬롯ID: row[idx("슬롯ID")] || '',
+          순위키워드: row[idx("순위키워드")] || '',
+        };
+      })
+      .filter(item => !isNaN(item.diff) && item.diff > 0) // 양수 상승폭만 필터
+      .sort((a, b) => b.diff - a.diff)
+      // 순위키워드 중복 제거 (첫 번째만 유지)
+      .reduce((acc, item) => {
+        const existing = acc.find(existing => existing.순위키워드 === item.순위키워드);
+        if (!existing) {
+          acc.push(item);
+        }
+        return acc;
+      }, [] as any[])
+      .slice(0, 5);
+    setReportRows(topRows);
+  }, [rawData]);
+
   // 보정치 적용 함수
   function getCorrectedRates(fact: any, correction: any, typeKey: any) {
     if (!fact) return null;
@@ -274,6 +380,10 @@ export default function Home() {
     setKeepRate(newKeepRate);
     setShoppingList(newShoppingList);
     setPlaceList(newPlaceList);
+    
+    // 리포트 데이터는 유지 (localStorage에 저장된 데이터 사용)
+    // reportMultiInputs와 reportDropdownOptions는 그대로 유지
+    
     // localStorage에 저장
     localStorage.setItem('dashboardData', JSON.stringify({
       rawData: data,
@@ -344,6 +454,33 @@ export default function Home() {
       alert("로그인 실패");
     }
   };
+
+  // 컬럼명 찾기 함수 (대소문자 무시, 부분 일치)
+  function findColumnIndex(header: string[], columnName: string): number {
+    const lowerColumnName = columnName.toLowerCase();
+    const exactMatch = header.findIndex(col => col.toLowerCase() === lowerColumnName);
+    if (exactMatch !== -1) return exactMatch;
+    
+    // 부분 일치 검색
+    const partialMatch = header.findIndex(col => col.toLowerCase().includes(lowerColumnName) || lowerColumnName.includes(col.toLowerCase()));
+    if (partialMatch !== -1) return partialMatch;
+    
+    return -1; // 찾지 못함
+  }
+
+  // 엑셀 시리얼 넘버를 JS 날짜 문자열로 변환하는 함수
+  function excelSerialToDate(serial: any): string {
+    if (!serial || isNaN(serial)) return serial;
+    // 엑셀 기준 1900-01-01
+    const utc_days = Math.floor(serial - 25569);
+    const utc_value = utc_days * 86400;
+    const date_info = new Date(utc_value * 1000);
+    // YYYY-MM-DD 포맷
+    const yyyy = date_info.getFullYear();
+    const mm = String(date_info.getMonth() + 1).padStart(2, '0');
+    const dd = String(date_info.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
 
   // 쇼핑 대시보드 헤더
   const shoppingDashboardHeader = [
@@ -466,20 +603,21 @@ export default function Home() {
                 관리자 로그인
               </button>
             )}
-            {isLoggedIn && (
-              <button
-                className={`pl-6 py-1 text-left text-gray-400 hover:text-white transition`}
-                onClick={() => alert('준비중')}
-              >
-                리포트 발행용
-              </button>
-            )}
+
             {isLoggedIn && (
               <button
                 className="pl-6 py-1 text-left text-gray-400 hover:text-white transition"
                 onClick={() => setShowCorrectionSetting(true)}
               >
                 등락률 보정치 조정
+              </button>
+            )}
+            {isLoggedIn && (
+              <button
+                className={`pl-6 py-1 text-left text-gray-400 hover:text-white transition`}
+                onClick={() => { setActiveMenu('report'); setShowCorrectionSetting(false); }}
+              >
+                리포트 발행용
               </button>
             )}
           </nav>
@@ -496,17 +634,7 @@ export default function Home() {
               </div>
             </div>
           )}
-          {/* 차트: 쇼핑/플레이스 메뉴에서만 노출, 보정치 조정 중에는 숨김 */}
-          {(activeMenu === 'shopping' || activeMenu === 'place') && !showCorrectionSetting && (
-            <DashboardLineChart
-              data={chartData}
-              lines={lineOptions}
-              onToggleLine={handleToggleLine}
-              periodType={periodType}
-              onChangePeriod={handleChangePeriod}
-              chartTitle={activeMenu === 'shopping' ? '네이버 쇼핑 상승 추이' : '네이버 플레이스 상승 추이'}
-            />
-          )}
+          {/* 차트: 숨김 처리 */}
           {showCorrectionSetting ? (
             <div className="flex flex-col gap-8">
               {correctionItems.map(item => (
@@ -1016,6 +1144,246 @@ export default function Home() {
                 ) : (
                   <div className="mt-8 text-center text-gray-400">데이터가 없습니다.</div>
                 )
+              )}
+              {activeMenu === 'report' && (
+                <div className="mt-8">
+                  {/* Raw 데이터 미리보기 박스 (최상단) */}
+                  <button
+                    className="mb-4 px-3 py-1.5 rounded-lg bg-gradient-to-r from-gray-700 to-gray-900 text-xs text-white font-semibold shadow-md hover:from-gray-600 hover:to-gray-800 transition-all border border-white/10"
+                    onClick={() => setShowRawPreview(v => !v)}
+                  >
+                    {showRawPreview ? 'Raw 데이터 숨기기' : 'Raw 데이터 미리보기'}
+                  </button>
+                  {showRawPreview && rawData && rawData.length > 0 && (
+                    <div className="mb-8 overflow-x-auto">
+                      <table className="w-full text-xs border border-white/10 table-auto" style={{ tableLayout: 'auto' }}>
+                        <colgroup>
+                          {rawData[0]?.map((_, idx) => <col key={idx} />)}
+                        </colgroup>
+                        <thead>
+                          <tr>
+                            {rawData[0]?.map((col, idx) => <th key={idx} className="px-3 py-2 bg-[#232329] text-[#e4e4e7] font-semibold whitespace-nowrap">{col}</th>)}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rawData.slice(1, 11).map((row, i) => (
+                            <tr key={i}>
+                              {row.map((cell, j) => {
+                                const isDateCol = rawData[0][j] === "광고시작일";
+                                return (
+                                  <td key={j} className="px-3 py-2 text-[#e4e4e7] whitespace-nowrap text-center">
+                                    {isDateCol ? excelSerialToDate(cell) : cell}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {/* 리포트 타이틀 */}
+                  <h2 className="text-2xl font-bold mb-4 text-white">최초 순위 대비 오늘, 상승 폭 TOP5 광고ID : (쇼핑[가격비교])</h2>
+                  {/* 상승 데이터 추적 미리보기 박스 */}
+                  <button
+                    className="mb-4 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-800 to-gray-900 text-xs text-white font-semibold shadow-md hover:from-blue-700 hover:to-gray-800 transition-all border border-blue-900/30"
+                    onClick={() => setShowRisePreview(v => !v)}
+                  >
+                    {showRisePreview ? '상승 데이터 추적 숨기기' : '상승 데이터 추적 미리보기'}
+                  </button>
+                  {showRisePreview && rawData && rawData.length > 0 && (() => {
+                    const header = rawData[0];
+                    const rows = rawData.slice(1);
+                    const idx = (name: string) => header.indexOf(name);
+                    // B열(슬롯ID) 추가 반영, 광고유형 '쇼핑(가격비교)', D-Day/최초순위 숫자인 행만
+                    const filtered = rows.filter(row => row[idx("광고유형")] === "쇼핑(가격비교)" && !isNaN(Number(row[idx("D-Day")])) && !isNaN(Number(row[idx("최초순위")])));
+                    const riseRows = filtered
+                      .map(row => ({
+                        row,
+                        상승폭: Number(row[idx("최초순위")]) - Number(row[idx("D-Day")]),
+                      }))
+                      .sort((a, b) => b.상승폭 - a.상승폭)
+                      .slice(0, 10);
+                    // 주요 컬럼만 출력
+                    const cols = ["광고ID", "슬롯ID", "이름", "광고유형", "광고시작일", "유입수", "순위키워드", "검색량", "D-Day", "최초순위", "상승폭"];
+                    return (
+                      <div className="mb-8 overflow-x-auto">
+                        <div className="font-bold mb-2 text-white">상승 데이터 추적</div>
+                        <table className="w-full text-xs border border-white/10 table-auto" style={{ tableLayout: 'auto' }}>
+                          <colgroup>
+                            {cols.map((_, idx) => <col key={idx} />)}
+                          </colgroup>
+                          <thead>
+                            <tr>
+                              {cols.map(col => <th key={col} className="px-3 py-2 bg-[#232329] text-[#e4e4e7] font-semibold whitespace-nowrap">{col}</th>)}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {riseRows.map(({ row, 상승폭 }, i) => (
+                              <tr key={i}>
+                                {cols.map(col => {
+                                  if (col === "상승폭") {
+                                    return <td key={col} className="px-3 py-2 text-[#e4e4e7] whitespace-nowrap text-center">{상승폭}</td>;
+                                  } else if (col === "D-Day") {
+                                    const dday = row[idx("D-Day")];
+                                    const first = row[idx("최초순위")];
+                                    const diff = Number(first) - Number(dday);
+                                    let diffColor = diff > 0 ? "text-red-500" : diff < 0 ? "text-blue-500" : "";
+                                    return (
+                                      <td key={col} className="px-3 py-2 text-[#e4e4e7] whitespace-nowrap text-center">
+                                        {dday}{!isNaN(diff) && diff !== 0 && (
+                                          <span className={`${diffColor} font-semibold ml-1`}>({diff > 0 ? "+" : ""}{diff})</span>
+                                        )}
+                                      </td>
+                                    );
+                                  } else if (col === "광고시작일") {
+                                    return <td key={col} className="px-3 py-2 text-[#e4e4e7] whitespace-nowrap text-center">{excelSerialToDate(row[idx("광고시작일")])}</td>;
+                                  } else {
+                                    return <td key={col} className="px-3 py-2 text-[#e4e4e7] whitespace-nowrap text-center">{row[idx(col)]}</td>;
+                                  }
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })()}
+                  {/* 기존 리포트용 테이블 */}
+                  <div className="rounded-2xl shadow-2xl bg-gradient-to-br from-[#18181b] to-[#232329] border border-white/20 overflow-x-auto mt-8 p-4">
+                    <table className="w-full table-auto border-separate border-spacing-0 text-xs text-gray-200" style={{ tableLayout: 'auto' }}>
+                      <colgroup>
+                        <col /><col /><col /><col /><col /><col /><col /><col /><col /><col />
+                      </colgroup>
+                      <thead>
+                        <tr className="bg-[#232329]">
+                          <th className="px-3 py-2 font-bold text-xs text-gray-300 border-b border-white/10">광고ID</th>
+                          <th className="px-3 py-2 font-bold text-xs text-gray-300 border-b border-white/10">로그인ID</th>
+                          <th className="px-3 py-2 font-bold text-xs text-gray-300 border-b border-white/10">광고시작일</th>
+                          <th className="px-3 py-2 font-bold text-xs text-gray-300 border-b border-white/10">유입수</th>
+                          <th className="px-3 py-2 font-bold text-xs text-gray-300 border-b border-white/10">순위키워드</th>
+                          <th className="px-3 py-2 font-bold text-xs text-gray-300 border-b border-white/10">검색량</th>
+                          <th className="px-3 py-2 font-bold text-xs text-gray-300 border-b border-white/10">D-DAY</th>
+                          <th className="px-3 py-2 font-bold text-xs text-gray-300 border-b border-white/10">10K 슬롯ID</th>
+                          <th className="px-3 py-2 font-bold text-xs text-gray-300 border-b border-white/10">10K 활성화 키워드 수</th>
+                          <th className="px-3 py-2 font-bold text-xs text-gray-300 border-b border-white/10">10K 유입경로</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reportRows.map(({ row, 광고ID, 슬롯ID }, idx) => {
+                          const key = `${광고ID}-${슬롯ID}`;
+                          const input = reportMultiInputs[key] || { keywordCount: "", channels: [] };
+                          return (
+                            <tr key={key} className={idx % 2 === 0 ? "bg-[#202024] hover:bg-[#232329] transition" : "bg-[#18181b] hover:bg-[#232329] transition"}>
+                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[findColumnIndex(reportHeader, "광고ID")] || '-'}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[findColumnIndex(reportHeader, "로그인ID")] || row[findColumnIndex(reportHeader, "ID")] || '-'}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{excelSerialToDate(row[findColumnIndex(reportHeader, "광고시작일")])}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[findColumnIndex(reportHeader, "유입수")] || '-'}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[findColumnIndex(reportHeader, "순위키워드")] || '-'}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[findColumnIndex(reportHeader, "검색량")] || '-'}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">
+                                {(() => {
+                                  const dday = row[findColumnIndex(reportHeader, "D-Day")];
+                                  const first = row[findColumnIndex(reportHeader, "최초순위")];
+                                  const diff = Number(first) - Number(dday);
+                                  let diffColor = diff > 0 ? "text-red-500" : diff < 0 ? "text-blue-500" : "";
+                                  return (
+                                    <>
+                                      {dday}{!isNaN(diff) && diff !== 0 && (
+                                        <span className={`${diffColor} font-semibold ml-1`}>({diff > 0 ? "+" : ""}{diff})</span>
+                                      )}
+                                    </>
+                                  );
+                                })()}
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[findColumnIndex(reportHeader, "슬롯ID")] || '-'}</td>
+                              {/* 입력/선택 필드는 기존대로 */}
+                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">
+                                <input type="number" className="bg-[#232329] text-white px-2 py-1 rounded w-16 text-xs border border-gray-600/30" value={input.keywordCount} onChange={e => setReportMultiInputs(inputs => ({ ...inputs, [key]: { ...inputs[key], keywordCount: e.target.value } }))} />
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">
+                                {/* 다중 선택 드롭다운 */}
+                                <div className="flex flex-wrap gap-1 mb-1">
+                                  {input.channels.map((ch, i) => (
+                                    <span key={i} className="bg-blue-700 text-white rounded px-2 py-0.5 text-xs flex items-center">
+                                      {ch}
+                                      <button className="ml-1 text-xs" onClick={() => setReportMultiInputs(inputs => ({ ...inputs, [key]: { ...inputs[key], channels: inputs[key].channels.filter(c => c !== ch) } }))}>×</button>
+                                    </span>
+                                  ))}
+                                </div>
+                                <select className="bg-[#232329] text-white px-2 py-1 rounded w-full text-xs border border-gray-600/30" value="" onChange={e => {
+                                  const val = e.target.value;
+                                  if (val && !input.channels.includes(val)) {
+                                    setReportMultiInputs(inputs => ({ ...inputs, [key]: { ...inputs[key], channels: [...inputs[key].channels, val] } }));
+                                  }
+                                }}>
+                                  <option value="">추가 선택</option>
+                                  {reportDropdownOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                </select>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {/* GPT 리포트 2행 */}
+                        <tr>
+                          <td colSpan={10} className="bg-[#232329] text-blue-400 font-bold px-4 py-2 text-xs rounded-t-lg">GPT리포트 : 최초 대비 오늘 상승폭이 큰 "쇼핑(가격비교)"상품</td>
+                        </tr>
+                        <tr>
+                          <td colSpan={10} className="bg-[#18181b] text-white px-4 py-3 text-xs rounded-b-lg border-b border-white/10">
+                            {/* 실제 리포트 내용: 5개 행의 입력/선택값을 조합해서 출력 (임시) */}
+                            {reportRows.map(({ row, 광고ID, 슬롯ID }, idx) => {
+                              const key = `${광고ID}-${슬롯ID}`;
+                              const input = reportMultiInputs[key] || { keywordCount: "", channels: [] };
+                              return (
+                                <div key={key} className="mb-1">
+                                  <span className="font-semibold text-green-400">[{row[findColumnIndex(reportHeader, "광고ID")] || '-'}]</span> 키워드 {input.keywordCount}개, 유입경로: {input.channels.join(", ")}
+                                </div>
+                              );
+                            })}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    {/* 드롭다운 옵션 관리 UI */}
+                    <div className="mt-4 p-3 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl text-white shadow-lg border border-white/10">
+                      <div className="font-bold mb-2 text-xs text-gray-300">유입경로 옵션 관리</div>
+                      <div className="flex gap-2 mb-2 flex-wrap">
+                        {reportDropdownOptions.map((opt, i) => (
+                          <span key={i} className="bg-gray-700 rounded px-2 py-1 flex items-center gap-1 text-xs shadow-sm border border-gray-600/30">
+                            {editOptionIdx === i ? (
+                              <>
+                                <input value={editOptionValue} onChange={e => setEditOptionValue(e.target.value)} className="bg-[#18181b] text-white px-2 py-1 rounded text-xs border border-gray-500/30" />
+                                <button onClick={() => {
+                                  setReportDropdownOptions(opts => opts.map((o, idx) => idx === i ? editOptionValue : o));
+                                  setEditOptionIdx(null); setEditOptionValue("");
+                                }} className="text-green-400 text-xs px-1 py-0.5 rounded hover:bg-green-900/30">저장</button>
+                                <button onClick={() => { setEditOptionIdx(null); setEditOptionValue(""); }} className="text-gray-400 text-xs px-1 py-0.5 rounded hover:bg-gray-700/30">취소</button>
+                              </>
+                            ) : (
+                              <>
+                                {opt}
+                                <button onClick={() => { setEditOptionIdx(i); setEditOptionValue(opt); }} className="text-yellow-400 ml-1 text-xs px-1 py-0.5 rounded hover:bg-yellow-900/30">수정</button>
+                                <button onClick={() => setReportDropdownOptions(opts => opts.filter((_, idx) => idx !== i))} className="text-red-400 ml-1 text-xs px-1 py-0.5 rounded hover:bg-red-900/30">삭제</button>
+                              </>
+                            )}
+                          </span>
+                        ))}
+                        <input value={newOption} onChange={e => setNewOption(e.target.value)} className="bg-[#18181b] text-white px-2 py-1 rounded text-xs border border-gray-500/30" placeholder="새 옵션"
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (newOption && !reportDropdownOptions.includes(newOption)) {
+                                setReportDropdownOptions(opts => [...opts, newOption]);
+                                setNewOption("");
+                              }
+                            }
+                          }}
+                        />
+                        <button onClick={() => { if (newOption && !reportDropdownOptions.includes(newOption)) { setReportDropdownOptions(opts => [...opts, newOption]); setNewOption(""); } }} className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold shadow hover:bg-blue-700 transition">추가</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )}
             </>
           )}
