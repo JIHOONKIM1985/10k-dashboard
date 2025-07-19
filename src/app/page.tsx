@@ -39,11 +39,43 @@ export default function Home() {
   const [loginPw, setLoginPw] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showCorrectionSetting, setShowCorrectionSetting] = useState(false);
-  const [correctionRange, setCorrectionRange] = useState<any>({});
+  const [correctionRange, setCorrectionRange] = useState<any>({
+    // 쇼핑 전체 등락률
+    shoppingRiseMin: 30, shoppingRiseMax: 40,
+    shoppingKeepMin: 30, shoppingKeepMax: 40,
+    shoppingFallMin: 20, shoppingFallMax: 30,
+    // 쇼핑 단일 등락률
+    shoppingSingleRiseMin: 30, shoppingSingleRiseMax: 40,
+    shoppingSingleKeepMin: 30, shoppingSingleKeepMax: 40,
+    shoppingSingleFallMin: 20, shoppingSingleFallMax: 30,
+    // 쇼핑 가격비교 등락률
+    shoppingCompareRiseMin: 30, shoppingCompareRiseMax: 40,
+    shoppingCompareKeepMin: 30, shoppingCompareKeepMax: 40,
+    shoppingCompareFallMin: 20, shoppingCompareFallMax: 30,
+    // 플레이스 전체 등락률
+    placeRiseMin: 30, placeRiseMax: 40,
+    placeKeepMin: 30, placeKeepMax: 40,
+    placeFallMin: 20, placeFallMax: 30,
+    // 플레이스 퀴즈 등락률
+    quizRiseMin: 30, quizRiseMax: 40,
+    quizKeepMin: 30, quizKeepMax: 40,
+    quizFallMin: 20, quizFallMax: 30,
+    // 플레이스 저장 등락률
+    placeSaveRiseMin: 30, placeSaveRiseMax: 40,
+    placeSaveKeepMin: 30, placeSaveKeepMax: 40,
+    placeSaveFallMin: 20, placeSaveFallMax: 30,
+    // 플레이스 저장x2 등락률
+    placeSave2RiseMin: 30, placeSave2RiseMax: 40,
+    placeSave2KeepMin: 30, placeSave2KeepMax: 40,
+    placeSave2FallMin: 20, placeSave2FallMax: 30,
+    // 플레이스 KEEP 등락률
+    placeKeepRiseMin: 30, placeKeepRiseMax: 40,
+    placeKeepKeepMin: 30, placeKeepKeepMax: 40,
+    placeKeepFallMin: 20, placeKeepFallMax: 30,
+  });
   const [activeHandle, setActiveHandle] = useState<string | null>(null);
-<<<<<<< HEAD
-  
-  // 리포트 발행용 관련 state
+
+  // 리포트 발행용 관련 state (중복 선언 없이 한 번만)
   const [reportMultiInputs, setReportMultiInputs] = useState<Record<string, { keywordCount: string; channels: string[] }>>({});
   const [reportInputs, setReportInputs] = useState<Record<string, { keywordCount: string; channel: string }>>({});
   const [showRawPreview, setShowRawPreview] = useState(false);
@@ -53,11 +85,8 @@ export default function Home() {
   const [newOption, setNewOption] = useState("");
   const [editOptionIdx, setEditOptionIdx] = useState<number|null>(null);
   const [editOptionValue, setEditOptionValue] = useState("");
-  const [reportRows, setReportRows] = useState<any[]>([]);
 
   // 차트 상태 및 예시 데이터 (쇼핑/플레이스)
-=======
->>>>>>> 58a181ddb163c65343bbaac185ff431c5cafb04c
   const [periodType, setPeriodType] = useState<'day' | 'week' | 'month'>('day');
   const [shoppingLineOptions, setShoppingLineOptions] = useState([
     { key: '전체', label: '전체', color: '#22c55e', visible: true },
@@ -76,15 +105,6 @@ export default function Home() {
   const [todayStr, setTodayStr] = React.useState('');
   const [yesterdayStr, setYesterdayStr] = React.useState('');
   const [todayFullStr, setTodayFullStr] = React.useState('');
-  const [reportMultiInputs, setReportMultiInputs] = useState<Record<string, { keywordCount: string; channels: string[] }>>({});
-  const [reportInputs, setReportInputs] = useState<Record<string, { keywordCount: string; channel: string }>>({});
-  const [showRawPreview, setShowRawPreview] = useState(false);
-  const [reportHeader, setReportHeader] = useState<string[]>([]);
-  const [showRisePreview, setShowRisePreview] = useState(false);
-  const [reportDropdownOptions, setReportDropdownOptions] = useState<string[]>([]);
-  const [newOption, setNewOption] = useState("");
-  const [editOptionIdx, setEditOptionIdx] = useState<number|null>(null);
-  const [editOptionValue, setEditOptionValue] = useState("");
 
   useEffect(() => { setIsClient(true); }, []);
 
@@ -228,41 +248,14 @@ export default function Home() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem('correctionRange');
-      if (saved) setCorrectionRange(JSON.parse(saved));
-      else setCorrectionRange({
-        // 쇼핑 전체 등락률
-        shoppingRiseMin: 30, shoppingRiseMax: 40,
-        shoppingKeepMin: 30, shoppingKeepMax: 40,
-        shoppingFallMin: 20, shoppingFallMax: 30,
-        // 쇼핑 단일 등락률
-        shoppingSingleRiseMin: 30, shoppingSingleRiseMax: 40,
-        shoppingSingleKeepMin: 30, shoppingSingleKeepMax: 40,
-        shoppingSingleFallMin: 20, shoppingSingleFallMax: 30,
-        // 쇼핑 가격비교 등락률
-        shoppingCompareRiseMin: 30, shoppingCompareRiseMax: 40,
-        shoppingCompareKeepMin: 30, shoppingCompareKeepMax: 40,
-        shoppingCompareFallMin: 20, shoppingCompareFallMax: 30,
-        // 플레이스 전체 등락률
-        placeRiseMin: 30, placeRiseMax: 40,
-        placeKeepMin: 30, placeKeepMax: 40,
-        placeFallMin: 20, placeFallMax: 30,
-        // 플레이스 퀴즈 등락률
-        quizRiseMin: 30, quizRiseMax: 40,
-        quizKeepMin: 30, quizKeepMax: 40,
-        quizFallMin: 20, quizFallMax: 30,
-        // 플레이스 저장 등락률
-        placeSaveRiseMin: 30, placeSaveRiseMax: 40,
-        placeSaveKeepMin: 30, placeSaveKeepMax: 40,
-        placeSaveFallMin: 20, placeSaveFallMax: 30,
-        // 플레이스 저장x2 등락률
-        placeSave2RiseMin: 30, placeSave2RiseMax: 40,
-        placeSave2KeepMin: 30, placeSave2KeepMax: 40,
-        placeSave2FallMin: 20, placeSave2FallMax: 30,
-        // 플레이스 KEEP 등락률
-        placeKeepRiseMin: 30, placeKeepRiseMax: 40,
-        placeKeepKeepMin: 30, placeKeepKeepMax: 40,
-        placeKeepFallMin: 20, placeKeepFallMax: 30,
-      });
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setCorrectionRange(parsed);
+        } catch {
+          // 파싱 실패 시 기본값 유지
+        }
+      }
     }
   }, []);
 
@@ -389,7 +382,42 @@ export default function Home() {
       const fallMin = correction?.[`${baseKey}FallMin`] ?? 0;
       const fallMax = correction?.[`${baseKey}FallMax`] ?? 100;
 
-      // 팩트 데이터 추출
+      // 팩트 데이터가 없으면 보정치만으로 랜덤값 생성
+      if (!fact || (!fact.상승 && !fact.유지 && !fact.하락)) {
+        // 보정치 구간 내에서 랜덤값 생성
+        let 상승 = Math.random() * (riseMax - riseMin) + riseMin;
+        let 하락 = Math.random() * (fallMax - fallMin) + fallMin;
+        
+        // 유지 = 100 - (상승 + 하락) 자동 계산
+        let 유지 = 100 - 상승 - 하락;
+        
+        // 값 보정 (음수 방지)
+        if (유지 < 0) {
+          유지 = 0;
+          // 상승과 하락을 비율에 맞게 조정
+          const total = 상승 + 하락;
+          if (total > 0) {
+            상승 = (상승 / total) * 100;
+            하락 = (하락 / total) * 100;
+          }
+        }
+        
+        // 소수점 1자리로 고정
+        상승 = Math.round(상승 * 10) / 10;
+        유지 = Math.round(유지 * 10) / 10;
+        하락 = Math.round(하락 * 10) / 10;
+        
+        return {
+          '상승': 상승,
+          '유지': 유지,
+          '하락': 하락,
+          '상승_개수': 0,
+          '유지_개수': 0,
+          '하락_개수': 0
+        };
+      }
+
+      // 팩트 데이터가 있으면 보정 적용
       const factRise = fact?.상승 ?? 0;
       const factKeep = fact?.유지 ?? 0;
       const factFall = fact?.하락 ?? 0;
@@ -579,20 +607,6 @@ export default function Home() {
     return -1; // 찾지 못함
   }
 
-  // 엑셀 시리얼 넘버를 JS 날짜 문자열로 변환하는 함수
-  function excelSerialToDate(serial: any): string {
-    if (!serial || isNaN(serial)) return serial;
-    // 엑셀 기준 1900-01-01
-    const utc_days = Math.floor(serial - 25569);
-    const utc_value = utc_days * 86400;
-    const date_info = new Date(utc_value * 1000);
-    // YYYY-MM-DD 포맷
-    const yyyy = date_info.getFullYear();
-    const mm = String(date_info.getMonth() + 1).padStart(2, '0');
-    const dd = String(date_info.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
   // 쇼핑 대시보드 헤더
   const shoppingDashboardHeader = [
     "광고유형", "검색량", "최초대비", "어제대비",
@@ -633,27 +647,13 @@ export default function Home() {
     // eslint-disable-next-line
   }, [reportRows]);
 
-  // 엑셀 시리얼 넘버를 JS 날짜 문자열로 변환하는 함수
-  function excelSerialToDate(serial: any): string {
-    if (!serial || isNaN(serial)) return serial;
-    // 엑셀 기준 1900-01-01
-    const utc_days = Math.floor(serial - 25569);
-    const utc_value = utc_days * 86400;
-    const date_info = new Date(utc_value * 1000);
-    // YYYY-MM-DD 포맷
-    const yyyy = date_info.getFullYear();
-    const mm = String(date_info.getMonth() + 1).padStart(2, '0');
-    const dd = String(date_info.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
   // 리포트 발행용 데이터 추출 (쇼핑[가격비교] TOP5) - Raw 데이터 기반으로 변경
   useEffect(() => {
     if (!rawData || rawData.length === 0) return;
     const header = rawData[0];
     setReportHeader(header);
     const rows = rawData.slice(1);
-    const idx = (name: string) => header.indexOf(name);
+    const idx = (name: string) => findColumnIndex(header, name);
     // '쇼핑(가격비교)'만 필터
     const filtered = rows.filter(row => row[idx("광고유형")] === "쇼핑(가격비교)");
     // D-Day - 최초순위 = 상승폭
@@ -741,7 +741,7 @@ export default function Home() {
         {showLogin && (
           <form
             onSubmit={handleLogin}
-            className="fixed inset-0 flex items-center justify-center bg-black/60"
+            className="fixed inset-0 flex items-center justify-center bg-black/600"
             style={{ zIndex: 9999 }}
           >
             <div className="bg-[#232329] rounded-2xl p-8 shadow-lg flex flex-col gap-4 min-w-[320px]">
@@ -829,9 +829,6 @@ export default function Home() {
                 관리자 로그인
               </button>
             )}
-<<<<<<< HEAD
-
-=======
             {isLoggedIn && (
               <button
                 className={`pl-6 py-1 text-left text-gray-400 hover:text-white transition`}
@@ -840,21 +837,12 @@ export default function Home() {
                 리포트 발행용
               </button>
             )}
->>>>>>> 58a181ddb163c65343bbaac185ff431c5cafb04c
             {isLoggedIn && (
               <button
                 className="pl-6 py-1 text-left text-gray-400 hover:text-white transition"
                 onClick={() => { setShowCorrectionSetting(true); setActiveMenu('dashboard'); }}
               >
                 등락률 보정치 조정
-              </button>
-            )}
-            {isLoggedIn && (
-              <button
-                className={`pl-6 py-1 text-left text-gray-400 hover:text-white transition`}
-                onClick={() => { setActiveMenu('report'); setShowCorrectionSetting(false); }}
-              >
-                리포트 발행용
               </button>
             )}
           </nav>
@@ -871,23 +859,6 @@ export default function Home() {
               </div>
             </div>
           )}
-<<<<<<< HEAD
-          {/* 차트: 숨김 처리 */}
-=======
-          {/* 차트: 쇼핑/플레이스 메뉴에서만 노출, 보정치 조정 중에는 숨김 (아래는 완전 주석처리) */}
-          {/*
-          {(activeMenu === 'shopping' || activeMenu === 'place') && !showCorrectionSetting && (
-            <DashboardLineChart
-              data={chartData}
-              lines={lineOptions}
-              onToggleLine={handleToggleLine}
-              periodType={periodType}
-              onChangePeriod={handleChangePeriod}
-              chartTitle={activeMenu === 'shopping' ? '네이버 쇼핑 상승 추이' : '네이버 플레이스 상승 추이'}
-            />
-          )}
-          */}
->>>>>>> 58a181ddb163c65343bbaac185ff431c5cafb04c
           {showCorrectionSetting ? (
             <div className="flex flex-col gap-8">
               {correctionItems.map(item => (
@@ -979,14 +950,40 @@ export default function Home() {
                     if (!rate) return <div className="mt-8 text-center text-gray-400">데이터가 없습니다.</div>;
                     show = rate;
                   } else {
-                    // 비로그인 시: 보정치 적용 (데이터가 없어도 랜덤값 생성)
+                    // 비로그인 시: 보정치 적용
                     if (typeof window !== 'undefined') {
-                      // 더미 데이터로 보정치 적용
-                      const dummyRate = { 상승: 35, 유지: 40, 하락: 25 };
-                      show = getCachedCorrectedRates('shopping', dummyRate, correctionRange, 'shopping');
-                      if (!show || typeof show.상승 !== 'number' || isNaN(show.상승)) show = { 상승: 0, 유지: 100, 하락: 0 };
-                      if (typeof show.유지 !== 'number' || isNaN(show.유지)) show.유지 = 100;
-                      if (typeof show.하락 !== 'number' || isNaN(show.하락)) show.하락 = 0;
+                      // 실제 데이터가 있으면 그것을 기반으로 보정치 적용, 없으면 보정치만으로 랜덤값 생성
+                      show = getCachedCorrectedRates('shopping', rate, correctionRange, 'shopping');
+                      
+                      // 보정치가 제대로 적용되지 않았으면 기본값으로 랜덤 생성
+                      if (!show || typeof show.상승 !== 'number' || isNaN(show.상승)) {
+                        const riseMin = correctionRange.shoppingRiseMin ?? 30;
+                        const riseMax = correctionRange.shoppingRiseMax ?? 40;
+                        const fallMin = correctionRange.shoppingFallMin ?? 20;
+                        const fallMax = correctionRange.shoppingFallMax ?? 30;
+                        
+                        let 상승 = Math.random() * (riseMax - riseMin) + riseMin;
+                        let 하락 = Math.random() * (fallMax - fallMin) + fallMin;
+                        let 유지 = 100 - 상승 - 하락;
+                        
+                        if (유지 < 0) {
+                          유지 = 0;
+                          const total = 상승 + 하락;
+                          if (total > 0) {
+                            상승 = (상승 / total) * 100;
+                            하락 = (하락 / total) * 100;
+                          }
+                        }
+                        
+                        show = {
+                          상승: Math.round(상승 * 10) / 10,
+                          유지: Math.round(유지 * 10) / 10,
+                          하락: Math.round(하락 * 10) / 10,
+                          상승_개수: 0,
+                          유지_개수: 0,
+                          하락_개수: 0
+                        };
+                      }
                     } else {
                       // SSR에서는 렌더링하지 않음
                       return null;
@@ -1030,14 +1027,40 @@ export default function Home() {
                     if (!singleRate) return null;
                     showSingle = singleRate;
                   } else {
-                    // 비로그인 시: 보정치 적용 (데이터가 없어도 랜덤값 생성)
+                    // 비로그인 시: 보정치 적용
                     if (typeof window !== 'undefined') {
-                      // 더미 데이터로 보정치 적용
-                      const dummySingleRate = { 상승: 35, 유지: 40, 하락: 25 };
-                      showSingle = getCachedCorrectedRates('shoppingSingle', dummySingleRate, correctionRange, 'shoppingSingle');
-                      if (!showSingle || typeof showSingle.상승 !== 'number' || isNaN(showSingle.상승)) showSingle = { 상승: 0, 유지: 100, 하락: 0 };
-                      if (typeof showSingle.유지 !== 'number' || isNaN(showSingle.유지)) showSingle.유지 = 100;
-                      if (typeof showSingle.하락 !== 'number' || isNaN(showSingle.하락)) showSingle.하락 = 0;
+                      // 실제 데이터가 있으면 그것을 기반으로 보정치 적용, 없으면 보정치만으로 랜덤값 생성
+                      showSingle = getCachedCorrectedRates('shoppingSingle', singleRate, correctionRange, 'shoppingSingle');
+                      
+                      // 보정치가 제대로 적용되지 않았으면 기본값으로 랜덤 생성
+                      if (!showSingle || typeof showSingle.상승 !== 'number' || isNaN(showSingle.상승)) {
+                        const riseMin = correctionRange.shoppingSingleRiseMin ?? 30;
+                        const riseMax = correctionRange.shoppingSingleRiseMax ?? 40;
+                        const fallMin = correctionRange.shoppingSingleFallMin ?? 20;
+                        const fallMax = correctionRange.shoppingSingleFallMax ?? 30;
+                        
+                        let 상승 = Math.random() * (riseMax - riseMin) + riseMin;
+                        let 하락 = Math.random() * (fallMax - fallMin) + fallMin;
+                        let 유지 = 100 - 상승 - 하락;
+                        
+                        if (유지 < 0) {
+                          유지 = 0;
+                          const total = 상승 + 하락;
+                          if (total > 0) {
+                            상승 = (상승 / total) * 100;
+                            하락 = (하락 / total) * 100;
+                          }
+                        }
+                        
+                        showSingle = {
+                          상승: Math.round(상승 * 10) / 10,
+                          유지: Math.round(유지 * 10) / 10,
+                          하락: Math.round(하락 * 10) / 10,
+                          상승_개수: 0,
+                          유지_개수: 0,
+                          하락_개수: 0
+                        };
+                      }
                     } else {
                       return null;
                     }
@@ -1080,14 +1103,40 @@ export default function Home() {
                     if (!compareRate) return null;
                     showCompare = compareRate;
                   } else {
-                    // 비로그인 시: 보정치 적용 (데이터가 없어도 랜덤값 생성)
+                    // 비로그인 시: 보정치 적용
                     if (typeof window !== 'undefined') {
-                      // 더미 데이터로 보정치 적용
-                      const dummyCompareRate = { 상승: 35, 유지: 40, 하락: 25 };
-                      showCompare = getCachedCorrectedRates('shoppingCompare', dummyCompareRate, correctionRange, 'shoppingCompare');
-                      if (!showCompare || typeof showCompare.상승 !== 'number' || isNaN(showCompare.상승)) showCompare = { 상승: 0, 유지: 100, 하락: 0 };
-                      if (typeof showCompare.유지 !== 'number' || isNaN(showCompare.유지)) showCompare.유지 = 100;
-                      if (typeof showCompare.하락 !== 'number' || isNaN(showCompare.하락)) showCompare.하락 = 0;
+                      // 실제 데이터가 있으면 그것을 기반으로 보정치 적용, 없으면 보정치만으로 랜덤값 생성
+                      showCompare = getCachedCorrectedRates('shoppingCompare', compareRate, correctionRange, 'shoppingCompare');
+                      
+                      // 보정치가 제대로 적용되지 않았으면 기본값으로 랜덤 생성
+                      if (!showCompare || typeof showCompare.상승 !== 'number' || isNaN(showCompare.상승)) {
+                        const riseMin = correctionRange.shoppingCompareRiseMin ?? 30;
+                        const riseMax = correctionRange.shoppingCompareRiseMax ?? 40;
+                        const fallMin = correctionRange.shoppingCompareFallMin ?? 20;
+                        const fallMax = correctionRange.shoppingCompareFallMax ?? 30;
+                        
+                        let 상승 = Math.random() * (riseMax - riseMin) + riseMin;
+                        let 하락 = Math.random() * (fallMax - fallMin) + fallMin;
+                        let 유지 = 100 - 상승 - 하락;
+                        
+                        if (유지 < 0) {
+                          유지 = 0;
+                          const total = 상승 + 하락;
+                          if (total > 0) {
+                            상승 = (상승 / total) * 100;
+                            하락 = (하락 / total) * 100;
+                          }
+                        }
+                        
+                        showCompare = {
+                          상승: Math.round(상승 * 10) / 10,
+                          유지: Math.round(유지 * 10) / 10,
+                          하락: Math.round(하락 * 10) / 10,
+                          상승_개수: 0,
+                          유지_개수: 0,
+                          하락_개수: 0
+                        };
+                      }
                     } else {
                       return null;
                     }
@@ -1130,14 +1179,40 @@ export default function Home() {
                     if (!placeRate) return <div className="mt-8 text-center text-gray-400">데이터가 없습니다.</div>;
                     showPlace = placeRate;
                   } else {
-                    // 비로그인 시: 보정치 적용 (데이터가 없어도 랜덤값 생성)
+                    // 비로그인 시: 보정치 적용
                     if (typeof window !== 'undefined') {
-                      // 더미 데이터로 보정치 적용
-                      const dummyPlaceRate = { 상승: 35, 유지: 40, 하락: 25 };
-                      showPlace = getCachedCorrectedRates('place', dummyPlaceRate, correctionRange, 'place');
-                      if (!showPlace || typeof showPlace.상승 !== 'number' || isNaN(showPlace.상승)) showPlace = { 상승: 0, 유지: 100, 하락: 0 };
-                      if (typeof showPlace.유지 !== 'number' || isNaN(showPlace.유지)) showPlace.유지 = 100;
-                      if (typeof showPlace.하락 !== 'number' || isNaN(showPlace.하락)) showPlace.하락 = 0;
+                      // 실제 데이터가 있으면 그것을 기반으로 보정치 적용, 없으면 보정치만으로 랜덤값 생성
+                      showPlace = getCachedCorrectedRates('place', placeRate, correctionRange, 'place');
+                      
+                      // 보정치가 제대로 적용되지 않았으면 기본값으로 랜덤 생성
+                      if (!showPlace || typeof showPlace.상승 !== 'number' || isNaN(showPlace.상승)) {
+                        const riseMin = correctionRange.placeRiseMin ?? 30;
+                        const riseMax = correctionRange.placeRiseMax ?? 40;
+                        const fallMin = correctionRange.placeFallMin ?? 20;
+                        const fallMax = correctionRange.placeFallMax ?? 30;
+                        
+                        let 상승 = Math.random() * (riseMax - riseMin) + riseMin;
+                        let 하락 = Math.random() * (fallMax - fallMin) + fallMin;
+                        let 유지 = 100 - 상승 - 하락;
+                        
+                        if (유지 < 0) {
+                          유지 = 0;
+                          const total = 상승 + 하락;
+                          if (total > 0) {
+                            상승 = (상승 / total) * 100;
+                            하락 = (하락 / total) * 100;
+                          }
+                        }
+                        
+                        showPlace = {
+                          상승: Math.round(상승 * 10) / 10,
+                          유지: Math.round(유지 * 10) / 10,
+                          하락: Math.round(하락 * 10) / 10,
+                          상승_개수: 0,
+                          유지_개수: 0,
+                          하락_개수: 0
+                        };
+                      }
                     } else {
                       return null;
                     }
@@ -1180,14 +1255,40 @@ export default function Home() {
                     if (!quizRate) return null;
                     showQuiz = quizRate;
                   } else {
-                    // 비로그인 시: 보정치 적용 (데이터가 없어도 랜덤값 생성)
+                    // 비로그인 시: 보정치 적용
                     if (typeof window !== 'undefined') {
-                      // 더미 데이터로 보정치 적용
-                      const dummyQuizRate = { 상승: 35, 유지: 40, 하락: 25 };
-                      showQuiz = getCachedCorrectedRates('quiz', dummyQuizRate, correctionRange, 'quiz');
-                      if (!showQuiz || typeof showQuiz.상승 !== 'number' || isNaN(showQuiz.상승)) showQuiz = { 상승: 0, 유지: 100, 하락: 0 };
-                      if (typeof showQuiz.유지 !== 'number' || isNaN(showQuiz.유지)) showQuiz.유지 = 100;
-                      if (typeof showQuiz.하락 !== 'number' || isNaN(showQuiz.하락)) showQuiz.하락 = 0;
+                      // 실제 데이터가 있으면 그것을 기반으로 보정치 적용, 없으면 보정치만으로 랜덤값 생성
+                      showQuiz = getCachedCorrectedRates('quiz', quizRate, correctionRange, 'quiz');
+                      
+                      // 보정치가 제대로 적용되지 않았으면 기본값으로 랜덤 생성
+                      if (!showQuiz || typeof showQuiz.상승 !== 'number' || isNaN(showQuiz.상승)) {
+                        const riseMin = correctionRange.quizRiseMin ?? 30;
+                        const riseMax = correctionRange.quizRiseMax ?? 40;
+                        const fallMin = correctionRange.quizFallMin ?? 20;
+                        const fallMax = correctionRange.quizFallMax ?? 30;
+                        
+                        let 상승 = Math.random() * (riseMax - riseMin) + riseMin;
+                        let 하락 = Math.random() * (fallMax - fallMin) + fallMin;
+                        let 유지 = 100 - 상승 - 하락;
+                        
+                        if (유지 < 0) {
+                          유지 = 0;
+                          const total = 상승 + 하락;
+                          if (total > 0) {
+                            상승 = (상승 / total) * 100;
+                            하락 = (하락 / total) * 100;
+                          }
+                        }
+                        
+                        showQuiz = {
+                          상승: Math.round(상승 * 10) / 10,
+                          유지: Math.round(유지 * 10) / 10,
+                          하락: Math.round(하락 * 10) / 10,
+                          상승_개수: 0,
+                          유지_개수: 0,
+                          하락_개수: 0
+                        };
+                      }
                     } else {
                       return null;
                     }
@@ -1230,14 +1331,40 @@ export default function Home() {
                     if (!saveRate) return null;
                     showSave = saveRate;
                   } else {
-                    // 비로그인 시: 보정치 적용 (데이터가 없어도 랜덤값 생성)
+                    // 비로그인 시: 보정치 적용
                     if (typeof window !== 'undefined') {
-                      // 더미 데이터로 보정치 적용
-                      const dummySaveRate = { 상승: 35, 유지: 40, 하락: 25 };
-                      showSave = getCachedCorrectedRates('placeSave', dummySaveRate, correctionRange, 'placeSave');
-                      if (!showSave || typeof showSave.상승 !== 'number' || isNaN(showSave.상승)) showSave = { 상승: 0, 유지: 100, 하락: 0 };
-                      if (typeof showSave.유지 !== 'number' || isNaN(showSave.유지)) showSave.유지 = 100;
-                      if (typeof showSave.하락 !== 'number' || isNaN(showSave.하락)) showSave.하락 = 0;
+                      // 실제 데이터가 있으면 그것을 기반으로 보정치 적용, 없으면 보정치만으로 랜덤값 생성
+                      showSave = getCachedCorrectedRates('placeSave', saveRate, correctionRange, 'placeSave');
+                      
+                      // 보정치가 제대로 적용되지 않았으면 기본값으로 랜덤 생성
+                      if (!showSave || typeof showSave.상승 !== 'number' || isNaN(showSave.상승)) {
+                        const riseMin = correctionRange.placeSaveRiseMin ?? 30;
+                        const riseMax = correctionRange.placeSaveRiseMax ?? 40;
+                        const fallMin = correctionRange.placeSaveFallMin ?? 20;
+                        const fallMax = correctionRange.placeSaveFallMax ?? 30;
+                        
+                        let 상승 = Math.random() * (riseMax - riseMin) + riseMin;
+                        let 하락 = Math.random() * (fallMax - fallMin) + fallMin;
+                        let 유지 = 100 - 상승 - 하락;
+                        
+                        if (유지 < 0) {
+                          유지 = 0;
+                          const total = 상승 + 하락;
+                          if (total > 0) {
+                            상승 = (상승 / total) * 100;
+                            하락 = (하락 / total) * 100;
+                          }
+                        }
+                        
+                        showSave = {
+                          상승: Math.round(상승 * 10) / 10,
+                          유지: Math.round(유지 * 10) / 10,
+                          하락: Math.round(하락 * 10) / 10,
+                          상승_개수: 0,
+                          유지_개수: 0,
+                          하락_개수: 0
+                        };
+                      }
                     } else {
                       return null;
                     }
@@ -1280,14 +1407,40 @@ export default function Home() {
                     if (!save2Rate) return null;
                     showSave2 = save2Rate;
                   } else {
-                    // 비로그인 시: 보정치 적용 (데이터가 없어도 랜덤값 생성)
+                    // 비로그인 시: 보정치 적용
                     if (typeof window !== 'undefined') {
-                      // 더미 데이터로 보정치 적용
-                      const dummySave2Rate = { 상승: 35, 유지: 40, 하락: 25 };
-                      showSave2 = getCachedCorrectedRates('placeSave2', dummySave2Rate, correctionRange, 'placeSave2');
-                      if (!showSave2 || typeof showSave2.상승 !== 'number' || isNaN(showSave2.상승)) showSave2 = { 상승: 0, 유지: 100, 하락: 0 };
-                      if (typeof showSave2.유지 !== 'number' || isNaN(showSave2.유지)) showSave2.유지 = 100;
-                      if (typeof showSave2.하락 !== 'number' || isNaN(showSave2.하락)) showSave2.하락 = 0;
+                      // 실제 데이터가 있으면 그것을 기반으로 보정치 적용, 없으면 보정치만으로 랜덤값 생성
+                      showSave2 = getCachedCorrectedRates('placeSave2', save2Rate, correctionRange, 'placeSave2');
+                      
+                      // 보정치가 제대로 적용되지 않았으면 기본값으로 랜덤 생성
+                      if (!showSave2 || typeof showSave2.상승 !== 'number' || isNaN(showSave2.상승)) {
+                        const riseMin = correctionRange.placeSave2RiseMin ?? 30;
+                        const riseMax = correctionRange.placeSave2RiseMax ?? 40;
+                        const fallMin = correctionRange.placeSave2FallMin ?? 20;
+                        const fallMax = correctionRange.placeSave2FallMax ?? 30;
+                        
+                        let 상승 = Math.random() * (riseMax - riseMin) + riseMin;
+                        let 하락 = Math.random() * (fallMax - fallMin) + fallMin;
+                        let 유지 = 100 - 상승 - 하락;
+                        
+                        if (유지 < 0) {
+                          유지 = 0;
+                          const total = 상승 + 하락;
+                          if (total > 0) {
+                            상승 = (상승 / total) * 100;
+                            하락 = (하락 / total) * 100;
+                          }
+                        }
+                        
+                        showSave2 = {
+                          상승: Math.round(상승 * 10) / 10,
+                          유지: Math.round(유지 * 10) / 10,
+                          하락: Math.round(하락 * 10) / 10,
+                          상승_개수: 0,
+                          유지_개수: 0,
+                          하락_개수: 0
+                        };
+                      }
                     } else {
                       return null;
                     }
@@ -1330,14 +1483,40 @@ export default function Home() {
                     if (!keepRate) return null;
                     showKeep = keepRate;
                   } else {
-                    // 비로그인 시: 보정치 적용 (데이터가 없어도 랜덤값 생성)
+                    // 비로그인 시: 보정치 적용
                     if (typeof window !== 'undefined') {
-                      // 더미 데이터로 보정치 적용
-                      const dummyKeepRate = { 상승: 35, 유지: 40, 하락: 25 };
-                      showKeep = getCachedCorrectedRates('placeKeep', dummyKeepRate, correctionRange, 'placeKeep');
-                      if (!showKeep || typeof showKeep.상승 !== 'number' || isNaN(showKeep.상승)) showKeep = { 상승: 0, 유지: 100, 하락: 0 };
-                      if (typeof showKeep.유지 !== 'number' || isNaN(showKeep.유지)) showKeep.유지 = 100;
-                      if (typeof showKeep.하락 !== 'number' || isNaN(showKeep.하락)) showKeep.하락 = 0;
+                      // 실제 데이터가 있으면 그것을 기반으로 보정치 적용, 없으면 보정치만으로 랜덤값 생성
+                      showKeep = getCachedCorrectedRates('placeKeep', keepRate, correctionRange, 'placeKeep');
+                      
+                      // 보정치가 제대로 적용되지 않았으면 기본값으로 랜덤 생성
+                      if (!showKeep || typeof showKeep.상승 !== 'number' || isNaN(showKeep.상승)) {
+                        const riseMin = correctionRange.placeKeepRiseMin ?? 30;
+                        const riseMax = correctionRange.placeKeepRiseMax ?? 40;
+                        const fallMin = correctionRange.placeKeepFallMin ?? 20;
+                        const fallMax = correctionRange.placeKeepFallMax ?? 30;
+                        
+                        let 상승 = Math.random() * (riseMax - riseMin) + riseMin;
+                        let 하락 = Math.random() * (fallMax - fallMin) + fallMin;
+                        let 유지 = 100 - 상승 - 하락;
+                        
+                        if (유지 < 0) {
+                          유지 = 0;
+                          const total = 상승 + 하락;
+                          if (total > 0) {
+                            상승 = (상승 / total) * 100;
+                            하락 = (하락 / total) * 100;
+                          }
+                        }
+                        
+                        showKeep = {
+                          상승: Math.round(상승 * 10) / 10,
+                          유지: Math.round(유지 * 10) / 10,
+                          하락: Math.round(하락 * 10) / 10,
+                          상승_개수: 0,
+                          유지_개수: 0,
+                          하락_개수: 0
+                        };
+                      }
                     } else {
                       return null;
                     }
@@ -1663,30 +1842,6 @@ export default function Home() {
                           const input = reportMultiInputs[key] || { keywordCount: "", channels: [] };
                           return (
                             <tr key={key} className={idx % 2 === 0 ? "bg-[#202024] hover:bg-[#232329] transition" : "bg-[#18181b] hover:bg-[#232329] transition"}>
-<<<<<<< HEAD
-                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[findColumnIndex(reportHeader, "광고ID")] || '-'}</td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[findColumnIndex(reportHeader, "로그인ID")] || row[findColumnIndex(reportHeader, "ID")] || '-'}</td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{excelSerialToDate(row[findColumnIndex(reportHeader, "광고시작일")])}</td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[findColumnIndex(reportHeader, "유입수")] || '-'}</td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[findColumnIndex(reportHeader, "순위키워드")] || '-'}</td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[findColumnIndex(reportHeader, "검색량")] || '-'}</td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">
-                                {(() => {
-                                  const dday = row[findColumnIndex(reportHeader, "D-Day")];
-                                  const first = row[findColumnIndex(reportHeader, "최초순위")];
-                                  const diff = Number(first) - Number(dday);
-                                  let diffColor = diff > 0 ? "text-red-500" : diff < 0 ? "text-blue-500" : "";
-                                  return (
-                                    <>
-                                      {dday}{!isNaN(diff) && diff !== 0 && (
-                                        <span className={`${diffColor} font-semibold ml-1`}>({diff > 0 ? "+" : ""}{diff})</span>
-                                      )}
-                                    </>
-                                  );
-                                })()}
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[findColumnIndex(reportHeader, "슬롯ID")] || '-'}</td>
-=======
                               <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[reportHeader.indexOf("광고ID")]}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[reportHeader.indexOf("로그인ID")]}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{excelSerialToDate(row[reportHeader.indexOf("광고시작일")])}</td>
@@ -1695,7 +1850,6 @@ export default function Home() {
                               <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[reportHeader.indexOf("검색량")]}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[reportHeader.indexOf("D-Day")]}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">{row[reportHeader.indexOf("슬롯ID")]}</td>
->>>>>>> 58a181ddb163c65343bbaac185ff431c5cafb04c
                               {/* 입력/선택 필드는 기존대로 */}
                               <td className="px-3 py-2 whitespace-nowrap text-center border-b border-white/10">
                                 <input type="number" className="bg-[#232329] text-white px-2 py-1 rounded w-16 text-xs border border-gray-600/30" value={input.keywordCount} onChange={e => setReportMultiInputs(inputs => ({ ...inputs, [key]: { ...inputs[key], keywordCount: e.target.value } }))} />
@@ -1735,11 +1889,7 @@ export default function Home() {
                               const input = reportMultiInputs[key] || { keywordCount: "", channels: [] };
                               return (
                                 <div key={key} className="mb-1">
-<<<<<<< HEAD
-                                  <span className="font-semibold text-green-400">[{row[findColumnIndex(reportHeader, "광고ID")] || '-'}]</span> 키워드 {input.keywordCount}개, 유입경로: {input.channels.join(", ")}
-=======
                                   <span className="font-semibold text-green-400">[{row[reportHeader.indexOf("광고ID")]}]</span> 키워드 {input.keywordCount}개, 유입경로: {input.channels.join(", ")}
->>>>>>> 58a181ddb163c65343bbaac185ff431c5cafb04c
                                 </div>
                               );
                             })}
@@ -1794,4 +1944,17 @@ export default function Home() {
       </div>
     </div>
   );
+}
+
+function excelSerialToDate(serial: any): string {
+  if (!serial || isNaN(serial)) return serial;
+  // 엑셀 기준 1900-01-01
+  const utc_days = Math.floor(serial - 25569);
+  const utc_value = utc_days * 86400;
+  const date_info = new Date(utc_value * 1000);
+  // YYYY-MM-DD 포맷
+  const yyyy = date_info.getFullYear();
+  const mm = String(date_info.getMonth() + 1).padStart(2, '0');
+  const dd = String(date_info.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
