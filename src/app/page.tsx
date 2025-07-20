@@ -607,12 +607,17 @@ export default function Home() {
 
   // 컬럼명 찾기 함수 (대소문자 무시, 부분 일치)
   function findColumnIndex(header: string[], columnName: string): number {
+    // null 체크 추가
+    if (!header || !Array.isArray(header) || !columnName) {
+      return -1;
+    }
+    
     const lowerColumnName = columnName.toLowerCase();
-    const exactMatch = header.findIndex(col => col.toLowerCase() === lowerColumnName);
+    const exactMatch = header.findIndex(col => col && col.toLowerCase() === lowerColumnName);
     if (exactMatch !== -1) return exactMatch;
     
     // 부분 일치 검색
-    const partialMatch = header.findIndex(col => col.toLowerCase().includes(lowerColumnName) || lowerColumnName.includes(col.toLowerCase()));
+    const partialMatch = header.findIndex(col => col && (col.toLowerCase().includes(lowerColumnName) || lowerColumnName.includes(col.toLowerCase())));
     if (partialMatch !== -1) return partialMatch;
     
     return -1; // 찾지 못함
@@ -743,7 +748,13 @@ export default function Home() {
     }
   }, [reportDropdownOptions]);
 
-  if (!isClient) return null;
+  if (!isClient) {
+    return (
+      <div className="w-full min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-xl">로딩 중...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-black">
