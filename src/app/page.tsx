@@ -119,6 +119,141 @@ export default function Home() {
     // 실제 데이터 가공 로직은 추후 추가
   };
 
+  // 보정치 적용 함수
+  function getCorrectedRates(fact: any, correction: any, typeKey: any) {
+    // 비로그인 시: 보정치 적용 (팩트 데이터 기반)
+    if (!isLoggedIn) {
+      // 보정치 키 매핑
+      const keyMap: Record<string, string> = {
+        'shopping': 'shopping',
+        'shoppingSingle': 'shoppingSingle',
+        'shoppingCompare': 'shoppingCompare',
+        'place': 'place',
+        'quiz': 'quiz',
+        'placeSave': 'placeSave',
+        'placeSave2': 'placeSave2',
+        'placeKeep': 'placeKeep',
+      };
+      const baseKey = keyMap[typeKey] || typeKey;
+      const riseMin = correction?.[`${baseKey}RiseMin`] ?? 0;
+      const riseMax = correction?.[`${baseKey}RiseMax`] ?? 100;
+      const keepMin = correction?.[`${baseKey}KeepMin`] ?? 0;
+      const keepMax = correction?.[`${baseKey}KeepMax`] ?? 100;
+      const fallMin = correction?.[`${baseKey}FallMin`] ?? 0;
+      const fallMax = correction?.[`${baseKey}FallMax`] ?? 100;
+
+      // 팩트 데이터가 없으면 보정치만으로 랜덤값 생성
+      if (!fact || (!fact.상승 && !fact.유지 && !fact.하락)) {
+        // 보정치 구간 내에서 랜덤값 생성
+        let 상승 = Math.random() * (riseMax - riseMin) + riseMin;
+        let 하락 = Math.random() * (fallMax - fallMin) + fallMin;
+        
+        // 유지 = 100 - (상승 + 하락) 자동 계산
+        let 유지 = 100 - 상승 - 하락;
+        
+        // 값 보정 (음수 방지)
+        if (유지 < 0) {
+          유지 = 0;
+          // 상승과 하락을 비율에 맞게 조정
+          const total = 상승 + 하락;
+          if (total > 0) {
+            상승 = (상승 / total) * 100;
+            하락 = (하락 / total) * 100;
+          }
+        }
+        
+        // 소수점 1자리로 고정
+        상승 = Math.round(상승 * 10) / 10;
+        유지 = Math.round(유지 * 10) / 10;
+        하락 = Math.round(하락 * 10) / 10;
+        
+        return {
+          '상승': 상승,
+          '유지': 유지,
+          '하락': 하락,
+          '상승_개수': 0,
+          '유지_개수': 0,
+          '하락_개수': 0
+        };
+      }
+
+      // 팩트 데이터가 있으면 보정 적용
+      const factRise = fact?.상승 ?? 0;
+      const factKeep = fact?.유지 ?? 0;
+      const factFall = fact?.하락 ?? 0;
+
+      // 구간 보정 로직
+      function getCorrectedValue(factValue: number, min: number, max: number): number {
+        // 팩트 데이터가 구간 내에 있으면 그대로 사용
+        if (factValue >= min && factValue <= max) {
+          return factValue;
+        }
+        // 구간 밖이면 구간 내 랜덤값으로 보정
+        return Math.random() * (max - min) + min;
+      }
+
+      // 상승/하락 구간 보정
+      let 상승 = getCorrectedValue(factRise, riseMin, riseMax);
+      let 하락 = getCorrectedValue(factFall, fallMin, fallMax);
+      
+      // 유지 = 100 - (상승 + 하락) 자동 계산
+      let 유지 = 100 - 상승 - 하락;
+      
+      // 값 보정 (음수 방지)
+      if (유지 < 0) {
+        유지 = 0;
+        // 상승과 하락을 비율에 맞게 조정
+        const total = 상승 + 하락;
+        if (total > 0) {
+          상승 = (상승 / total) * 100;
+          하락 = (하락 / total) * 100;
+        }
+      }
+      
+      // 소수점 1자리로 고정
+      상승 = Math.round(상승 * 10) / 10;
+      유지 = Math.round(유지 * 10) / 10;
+      하락 = Math.round(하락 * 10) / 10;
+      
+      return {
+        '상승': 상승,
+        '유지': 유지,
+        '하락': 하락,
+        '상승_개수': 0,
+        '유지_개수': 0,
+        '하락_개수': 0
+      };
+    }
+    // 로그인 시: 실제 데이터만 반환
+    return {
+      '상승': fact && typeof fact['상승'] === 'number' ? fact['상승'] : 0,
+      '유지': fact && typeof fact['유지'] === 'number' ? fact['유지'] : 0,
+      '하락': fact && typeof fact['하락'] === 'number' ? fact['하락'] : 0,
+      '상승_개수': fact?.상승_개수 ?? 0,
+      '유지_개수': fact?.유지_개수 ?? 0,
+      '하락_개수': fact?.하락_개수 ?? 0
+    };
+  }
+
+  // 보정치 캐시 저장/불러오기 함수
+  function getCachedCorrectedRates(key: string, fact: any, correction: any, typeKey: any) {
+    if (typeof window === 'undefined') return null;
+    const cacheStr = localStorage.getItem('correctedRatesCache');
+    let cache: any = {};
+    if (cacheStr) {
+      try { cache = JSON.parse(cacheStr); } catch {}
+    }
+    if (cache[key]) return cache[key];
+    const corrected = getCorrectedRates(fact, correction, typeKey);
+    cache[key] = corrected;
+    localStorage.setItem('correctedRatesCache', JSON.stringify(cache));
+    return corrected;
+  }
+
+  function clearCorrectedRatesCache() {
+    if (typeof window !== 'undefined') localStorage.removeItem('correctedRatesCache');
+  }
+
   // 날짜별로 해당 시점의 보정치 찾기
   function findAdjustmentForDate(dateStr: string) {
     if (!adjustmentHistory.length) return null;
@@ -359,139 +494,7 @@ export default function Home() {
     setReportRows(topRows);
   }, [rawData]);
 
-  // 보정치 적용 함수
-  function getCorrectedRates(fact: any, correction: any, typeKey: any) {
-    // 비로그인 시: 보정치 적용 (팩트 데이터 기반)
-    if (!isLoggedIn) {
-      // 보정치 키 매핑
-      const keyMap: Record<string, string> = {
-        'shopping': 'shopping',
-        'shoppingSingle': 'shoppingSingle',
-        'shoppingCompare': 'shoppingCompare',
-        'place': 'place',
-        'quiz': 'quiz',
-        'placeSave': 'placeSave',
-        'placeSave2': 'placeSave2',
-        'placeKeep': 'placeKeep',
-      };
-      const baseKey = keyMap[typeKey] || typeKey;
-      const riseMin = correction?.[`${baseKey}RiseMin`] ?? 0;
-      const riseMax = correction?.[`${baseKey}RiseMax`] ?? 100;
-      const keepMin = correction?.[`${baseKey}KeepMin`] ?? 0;
-      const keepMax = correction?.[`${baseKey}KeepMax`] ?? 100;
-      const fallMin = correction?.[`${baseKey}FallMin`] ?? 0;
-      const fallMax = correction?.[`${baseKey}FallMax`] ?? 100;
 
-      // 팩트 데이터가 없으면 보정치만으로 랜덤값 생성
-      if (!fact || (!fact.상승 && !fact.유지 && !fact.하락)) {
-        // 보정치 구간 내에서 랜덤값 생성
-        let 상승 = Math.random() * (riseMax - riseMin) + riseMin;
-        let 하락 = Math.random() * (fallMax - fallMin) + fallMin;
-        
-        // 유지 = 100 - (상승 + 하락) 자동 계산
-        let 유지 = 100 - 상승 - 하락;
-        
-        // 값 보정 (음수 방지)
-        if (유지 < 0) {
-          유지 = 0;
-          // 상승과 하락을 비율에 맞게 조정
-          const total = 상승 + 하락;
-          if (total > 0) {
-            상승 = (상승 / total) * 100;
-            하락 = (하락 / total) * 100;
-          }
-        }
-        
-        // 소수점 1자리로 고정
-        상승 = Math.round(상승 * 10) / 10;
-        유지 = Math.round(유지 * 10) / 10;
-        하락 = Math.round(하락 * 10) / 10;
-        
-        return {
-          '상승': 상승,
-          '유지': 유지,
-          '하락': 하락,
-          '상승_개수': 0,
-          '유지_개수': 0,
-          '하락_개수': 0
-        };
-      }
-
-      // 팩트 데이터가 있으면 보정 적용
-      const factRise = fact?.상승 ?? 0;
-      const factKeep = fact?.유지 ?? 0;
-      const factFall = fact?.하락 ?? 0;
-
-      // 구간 보정 로직
-      function getCorrectedValue(factValue: number, min: number, max: number): number {
-        // 팩트 데이터가 구간 내에 있으면 그대로 사용
-        if (factValue >= min && factValue <= max) {
-          return factValue;
-        }
-        // 구간 밖이면 구간 내 랜덤값으로 보정
-        return Math.random() * (max - min) + min;
-      }
-
-      // 상승/하락 구간 보정
-      let 상승 = getCorrectedValue(factRise, riseMin, riseMax);
-      let 하락 = getCorrectedValue(factFall, fallMin, fallMax);
-      
-      // 유지 = 100 - (상승 + 하락) 자동 계산
-      let 유지 = 100 - 상승 - 하락;
-      
-      // 값 보정 (음수 방지)
-      if (유지 < 0) {
-        유지 = 0;
-        // 상승과 하락을 비율에 맞게 조정
-        const total = 상승 + 하락;
-        if (total > 0) {
-          상승 = (상승 / total) * 100;
-          하락 = (하락 / total) * 100;
-        }
-      }
-      
-      // 소수점 1자리로 고정
-      상승 = Math.round(상승 * 10) / 10;
-      유지 = Math.round(유지 * 10) / 10;
-      하락 = Math.round(하락 * 10) / 10;
-      
-      return {
-        '상승': 상승,
-        '유지': 유지,
-        '하락': 하락,
-        '상승_개수': 0,
-        '유지_개수': 0,
-        '하락_개수': 0
-      };
-    }
-    // 로그인 시: 실제 데이터만 반환
-    return {
-      '상승': fact && typeof fact['상승'] === 'number' ? fact['상승'] : 0,
-      '유지': fact && typeof fact['유지'] === 'number' ? fact['유지'] : 0,
-      '하락': fact && typeof fact['하락'] === 'number' ? fact['하락'] : 0,
-      '상승_개수': fact?.상승_개수 ?? 0,
-      '유지_개수': fact?.유지_개수 ?? 0,
-      '하락_개수': fact?.하락_개수 ?? 0
-    };
-  }
-
-  // 보정치 캐시 저장/불러오기 함수
-  function getCachedCorrectedRates(key: string, fact: any, correction: any, typeKey: any) {
-    if (typeof window === 'undefined') return null;
-    const cacheStr = localStorage.getItem('correctedRatesCache');
-    let cache: any = {};
-    if (cacheStr) {
-      try { cache = JSON.parse(cacheStr); } catch {}
-    }
-    if (cache[key]) return cache[key];
-    const corrected = getCorrectedRates(fact, correction, typeKey);
-    cache[key] = corrected;
-    localStorage.setItem('correctedRatesCache', JSON.stringify(cache));
-    return corrected;
-  }
-  function clearCorrectedRatesCache() {
-    if (typeof window !== 'undefined') localStorage.removeItem('correctedRatesCache');
-  }
 
   // 2. 업로드 시 등락률 박스(팩트/보정) 기준으로 이력 저장
   const handleUpload = (data: any[][]) => {
