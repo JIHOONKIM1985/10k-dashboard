@@ -369,6 +369,14 @@ export default function Home() {
     loadAdjustment().then(data => {
       if (data) setCorrectionRange(data);
     });
+    
+    // Firestore에서 이력 데이터 로드
+    loadUploadHistory().then(data => {
+      if (data) setHistory(data);
+    });
+    loadAdjustmentHistory().then(data => {
+      if (data) setAdjustmentHistory(data);
+    });
   }, []);
 
   useEffect(() => {
