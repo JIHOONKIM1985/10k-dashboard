@@ -68,3 +68,43 @@ export async function loadUploadData() {
   }
   return null;
 }
+
+// 어제 집행 물량 집계 Firestore에 저장
+export async function saveAdInflowSummary(summary: any) {
+  await setDoc(doc(db, "global", "adInflowSummary"), { ...summary, updatedAt: Date.now() });
+}
+
+// 어제 집행 물량 집계 Firestore에서 불러오기
+export async function loadAdInflowSummary() {
+  const docRef = doc(db, "global", "adInflowSummary");
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    const { updatedAt, ...summary } = data;
+    return summary;
+  }
+  return null;
+}
+
+// 날짜별 광고유형별 유입수 집계 Firestore에 누적 저장
+export async function saveAdInflowHistory(date: string, summary: Record<string, number>) {
+  const docRef = doc(db, "global", "adInflowHistory");
+  const docSnap = await getDoc(docRef);
+  let history: Record<string, any> = {};
+  if (docSnap.exists()) {
+    history = docSnap.data();
+  }
+  history[date] = { ...summary, updatedAt: Date.now() };
+  await setDoc(docRef, history);
+}
+
+// 날짜별 광고유형별 유입수 집계 Firestore에서 불러오기
+export async function loadAdInflowHistory() {
+  const docRef = doc(db, "global", "adInflowHistory");
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    return data;
+  }
+  return {};
+}

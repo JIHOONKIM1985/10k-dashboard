@@ -15,7 +15,8 @@ import {
 import {
   saveGuestRates, loadGuestRates,
   saveCorrectionRange, loadCorrectionRange,
-  saveUploadData, loadUploadData
+  saveUploadData, loadUploadData,
+  saveAdInflowHistory
 } from "@/utils/firestoreService";
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
@@ -478,8 +479,8 @@ export default function Home() {
 
 
 
-  // 2. 업로드 시 등락률 박스(팩트/보정) 기준으로 이력 저장
-  const handleUpload = async (data: any[][]) => {
+  // 2. 업로드 시 단일 날짜 기준으로 Firestore에 집계 저장
+  const handleUpload = async (data: any[][], date?: string) => {
     clearCorrectedRatesCache();
     setRawData(data);
     const temp = makeTempData(data);
@@ -541,26 +542,24 @@ export default function Home() {
       updatedAt: Date.now(), // 저장 시각 등 추가 가능
     });
 
-    // Firestore에 업로드 이력 누적 저장 (YYYY-MM-DD)
-    const today = new Date();
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    const dateStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-    // saveUploadHistory(dateStr, {
-    //   date: dateStr,
-    //   shopping: {
-    //     전체: { 상승: newRate?.상승 ?? null, 유지: newRate?.유지 ?? null, 하락: newRate?.하락 ?? null },
-    //     단일: { 상승: newSingleRate?.상승 ?? null, 유지: newSingleRate?.유지 ?? null, 하락: newSingleRate?.하락 ?? null },
-    //     가격비교: { 상승: newCompareRate?.상승 ?? null, 유지: newCompareRate?.유지 ?? null, 하락: newCompareRate?.하락 ?? null },
-    //   },
-    //   place: {
-    //     전체: { 상승: newPlaceRate?.상승 ?? null, 유지: newPlaceRate?.유지 ?? null, 하락: newPlaceRate?.하락 ?? null },
-    //     퀴즈: { 상승: newQuizRate?.상승 ?? null, 유지: newQuizRate?.유지 ?? null, 하락: newQuizRate?.하락 ?? null },
-    //     저장: { 상승: newSaveRate?.상승 ?? null, 유지: newSaveRate?.유지 ?? null, 하락: newSaveRate?.하락 ?? null },
-    //     저장x2: { 상승: newSave2Rate?.상승 ?? null, 유지: newSave2Rate?.유지 ?? null, 하락: newSave2Rate?.하락 ?? null },
-    //     KEEP: { 상승: newKeepRate?.상승 ?? null, 유지: newKeepRate?.유지 ?? null, 하락: newKeepRate?.하락 ?? null },
-    //   },
-    //   updatedAt: Date.now(),
-    // });
+    // 날짜별 광고유형별 유입수 집계 Firestore에 누적 저장
+    if (date) {
+      const adTypes = ['쇼핑(가격비교)', '쇼핑(단일)', '플레이스퀴즈', '저장하기', '저장x2', 'KEEP', '쿠팡'];
+      let adTypeIdx = data[0].findIndex((h: string) => h.replace(/\s/g, '').includes('광고유형'));
+      let inflowIdx = data[0].findIndex((h: string) => h.replace(/\s/g, '').includes('유입수'));
+      if (adTypeIdx !== -1 && inflowIdx !== -1) {
+        // 날짜별로 동일 데이터 집계(담당자가 날짜별로 분할 업로드하지 않는 한, 전체 데이터가 각 날짜에 동일하게 들어감)
+        const inflowSummary: Record<string, number> = {};
+        for (let i = 1; i < data.length; i++) {
+          const type = data[i][adTypeIdx];
+          const inflow = Number(data[i][inflowIdx]) || 0;
+          if (adTypes.includes(type)) {
+            inflowSummary[type] = (inflowSummary[type] || 0) + inflow;
+          }
+        }
+        await saveAdInflowHistory(date, inflowSummary);
+      }
+    }
 
     // guestRates 생성 및 저장 (비로그인용)
     const guestRates = {
