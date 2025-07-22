@@ -50,7 +50,13 @@ export async function loadUploadData() {
   if (docSnap.exists()) {
     const data = docSnap.data();
     const { updatedAt, ...uploadData } = data;
-    return uploadData;
+    return {
+      ...uploadData,
+      rawData: uploadData.rawData ? JSON.parse(uploadData.rawData) : [],
+      tempData: uploadData.tempData ? JSON.parse(uploadData.tempData) : [],
+      shoppingList: uploadData.shoppingList ? JSON.parse(uploadData.shoppingList) : [],
+      placeList: uploadData.placeList ? JSON.parse(uploadData.placeList) : [],
+    };
   }
   return null;
 }
