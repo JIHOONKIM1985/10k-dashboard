@@ -292,3 +292,80 @@ export function getPlaceDashboardListV2(tempData: any[][], limit = 200) {
   });
   return unique.slice(0, limit);
 }
+
+export function getCorrectedRates(fact: any, correction: any, typeKey: any) {
+  const keyMap: Record<string, string> = {
+    'shopping': 'shopping',
+    'shoppingSingle': 'shoppingSingle',
+    'shoppingCompare': 'shoppingCompare',
+    'place': 'place',
+    'quiz': 'quiz',
+    'placeSave': 'placeSave',
+    'placeSave2': 'placeSave2',
+    'placeKeep': 'placeKeep',
+  };
+  const baseKey = keyMap[typeKey] || typeKey;
+  const riseMin = correction?.[`${baseKey}RiseMin`] ?? 0;
+  const riseMax = correction?.[`${baseKey}RiseMax`] ?? 100;
+  const fallMin = correction?.[`${baseKey}FallMin`] ?? 0;
+  const fallMax = correction?.[`${baseKey}FallMax`] ?? 100;
+
+  // 팩트 데이터가 없으면 구간 내 랜덤값
+  if (!fact || typeof fact.상승 !== 'number' || typeof fact.하락 !== 'number') {
+    let 상승 = Math.random() * (riseMax - riseMin) + riseMin;
+    let 하락 = Math.random() * (fallMax - fallMin) + fallMin;
+    let 유지 = 100 - 상승 - 하락;
+    if (유지 < 0) {
+      유지 = 0;
+      const total = 상승 + 하락;
+      if (total > 0) {
+        상승 = (상승 / total) * 100;
+        하락 = (하락 / total) * 100;
+      }
+    }
+    상승 = Math.round(상승 * 10) / 10;
+    유지 = Math.round(유지 * 10) / 10;
+    하락 = Math.round(하락 * 10) / 10;
+    return { 상승, 유지, 하락, 상승_개수: 0, 유지_개수: 0, 하락_개수: 0 };
+  }
+
+  // 팩트 데이터가 있으면 구간 보정
+  function correct(val: number, min: number, max: number) {
+    if (val >= min && val <= max) return val;
+    return Math.random() * (max - min) + min;
+  }
+  let 상승 = correct(fact.상승, riseMin, riseMax);
+  let 하락 = correct(fact.하락, fallMin, fallMax);
+  let 유지 = 100 - 상승 - 하락;
+  if (유지 < 0) {
+    유지 = 0;
+    const total = 상승 + 하락;
+    if (total > 0) {
+      상승 = (상승 / total) * 100;
+      하락 = (하락 / total) * 100;
+    }
+  }
+  상승 = Math.round(상승 * 10) / 10;
+  유지 = Math.round(유지 * 10) / 10;
+  하락 = Math.round(하락 * 10) / 10;
+  return {
+    상승,
+    유지,
+    하락,
+    상승_개수: fact.상승_개수 ?? 0,
+    유지_개수: fact.유지_개수 ?? 0,
+    하락_개수: fact.하락_개수 ?? 0,
+  };
+}
+
+export function updateGuestRates(newRates: any) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('guestRates', JSON.stringify(newRates as Record<string, any>));
+  }
+}
+
+export function safeFact(fact: any) {
+  return fact && typeof fact.상승 === 'number' && typeof fact.유지 === 'number' && typeof fact.하락 === 'number'
+    ? fact
+    : { 상승: 0, 유지: 0, 하락: 0 };
+}

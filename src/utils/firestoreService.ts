@@ -1,53 +1,56 @@
 // src/utils/firestoreService.ts
-import { db } from "../firebaseConfig";
-import { doc, setDoc, getDoc, collection, getDocs, query, orderBy } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+import { app } from "../firebaseConfig";
 
-// 1. 보정치 저장/불러오기
-export async function saveAdjustment(adjustment: any) {
-  console.log("saveAdjustment 호출됨", adjustment); // 추가
-  await setDoc(doc(db, "global", "adjustment"), adjustment);
+const db = getFirestore(app);
+
+// guestRates Firestore에 저장 (관리자 업로드 시)
+export async function saveGuestRates(guestRates: any) {
+  await setDoc(doc(db, "global", "guestRates"), { ...guestRates, updatedAt: Date.now() });
 }
-export async function loadAdjustment() {
+
+// guestRates Firestore에서 불러오기 (비로그인 사용자)
+export async function loadGuestRates() {
+  const docRef = doc(db, "global", "guestRates");
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    const { updatedAt, ...rates } = data;
+    return rates;
+  }
+  return null;
+}
+
+// 보정치(correctionRange) Firestore에 저장
+export async function saveCorrectionRange(range: any) {
+  await setDoc(doc(db, "global", "adjustment"), { ...range, updatedAt: Date.now() });
+}
+
+// 보정치(correctionRange) Firestore에서 불러오기
+export async function loadCorrectionRange() {
   const docRef = doc(db, "global", "adjustment");
   const docSnap = await getDoc(docRef);
-  return docSnap.exists() ? docSnap.data() : null;
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    const { updatedAt, ...range } = data;
+    return range;
+  }
+  return null;
 }
 
-// 2. 업로드 데이터 저장/불러오기
+// 업로드 데이터(팩트 등락률) Firestore에 저장
 export async function saveUploadData(uploadData: any) {
-  console.log("saveUploadData 호출됨", uploadData); // 추가
-  await setDoc(doc(db, "global", "uploadData"), uploadData);
+  await setDoc(doc(db, "global", "uploadData"), { ...uploadData, updatedAt: Date.now() });
 }
+
+// 업로드 데이터(팩트 등락률) Firestore에서 불러오기
 export async function loadUploadData() {
   const docRef = doc(db, "global", "uploadData");
   const docSnap = await getDoc(docRef);
-  return docSnap.exists() ? docSnap.data() : null;
-}
-
-// 3. 업로드 이력 누적 저장/불러오기
-export async function saveUploadHistory(date: string, uploadData: any) {
-  // date: 'YYYY-MM-DD' 형식
-  await setDoc(doc(db, "global_uploadHistory", date), uploadData);
-}
-export async function loadUploadHistory() {
-  // global_uploadHistory 컬렉션의 모든 문서 불러오기
-  const colRef = collection(db, "global_uploadHistory");
-  const q = query(colRef, orderBy("date", "asc"));
-  const snap = await getDocs(q);
-  return snap.docs.map(doc => doc.data());
-}
-
-// 4. 보정치 이력 누적 저장/불러오기
-export async function saveAdjustmentHistory(adjustment: any, savedAt: number) {
-  // savedAt: timestamp (ms)
-  await setDoc(doc(db, "global_adjustmentHistory", String(savedAt)), {
-    ...adjustment,
-    savedAt,
-  });
-}
-export async function loadAdjustmentHistory() {
-  const colRef = collection(db, "global_adjustmentHistory");
-  const q = query(colRef, orderBy("savedAt", "asc"));
-  const snap = await getDocs(q);
-  return snap.docs.map(doc => doc.data());
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    const { updatedAt, ...uploadData } = data;
+    return uploadData;
+  }
+  return null;
 }
