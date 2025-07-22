@@ -97,6 +97,59 @@ const ExcelUploader: React.FC<ExcelUploaderProps> = ({ onData }) => {
   }
 `;
 
+  // 로그인 팝업 스타일에 맞춘 datepicker 커스텀 스타일
+  const datepickerDarkStyle = `
+  .react-datepicker {
+    border: none;
+    box-shadow: none;
+    background: #232329;
+    font-size: 15px;
+    border-radius: 16px;
+    padding: 8px 0 0 0;
+    color: #fff;
+  }
+  .react-datepicker__header {
+    background: #232329;
+    border-bottom: none;
+    padding-top: 8px;
+  }
+  .react-datepicker__current-month,
+  .react-datepicker__day-name {
+    font-weight: 400;
+    color: #bdbdbd;
+    font-size: 13px;
+  }
+  .react-datepicker__day {
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    margin: 2px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #fff;
+    background: transparent;
+    transition: background 0.15s, color 0.15s;
+  }
+  .react-datepicker__day--selected,
+  .react-datepicker__day--keyboard-selected {
+    background: #2563eb;
+    color: #fff;
+  }
+  .react-datepicker__day:hover {
+    background: #393944;
+    color: #fff;
+  }
+  .react-datepicker__day--today {
+    border: 1.5px solid #2563eb;
+    background: #232329;
+    color: #60a5fa;
+  }
+  .react-datepicker__triangle {
+    display: none;
+  }
+`;
+
   return (
     <div className="flex flex-col w-full items-center gap-2">
       {/* 업로드 버튼 중앙 정렬 */}
@@ -112,9 +165,9 @@ const ExcelUploader: React.FC<ExcelUploaderProps> = ({ onData }) => {
       {/* 날짜 선택 모달 */}
       {showDatePicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-          <style>{datepickerCustomStyle}</style>
-          <div className="bg-white rounded-xl p-4 flex flex-col items-center gap-3 shadow-md border border-gray-200 min-w-[320px]">
-            <div className="text-sm font-medium text-gray-800 mb-1">날짜를 선택하세요</div>
+          <style>{datepickerDarkStyle}</style>
+          <div className="bg-[#232329] rounded-xl shadow-xl border border-white/10 px-8 py-6 flex flex-col items-center min-w-[320px] max-w-[90vw]">
+            <div className="text-base font-semibold text-white mb-3">날짜를 선택하세요</div>
             <DatePicker
               selected={selectedDate}
               onChange={handleDateSelect}
@@ -123,7 +176,12 @@ const ExcelUploader: React.FC<ExcelUploaderProps> = ({ onData }) => {
               inline
               locale="ko"
             />
-            <button className="mt-1 text-xs text-gray-400 hover:text-blue-700" onClick={() => setShowDatePicker(false)}>취소</button>
+            <button
+              className="w-full py-2 mt-2 rounded bg-[#393944] text-white text-base font-semibold hover:bg-[#44445a] transition"
+              onClick={() => setShowDatePicker(false)}
+            >
+              취소
+            </button>
           </div>
         </div>
       )}
