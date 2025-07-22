@@ -354,6 +354,34 @@ export default function Home() {
     }
   }, [isLoggedIn]);
 
+  // 로그인 후 Firestore에서 데이터를 불러와서 state에 세팅하는 useEffect 추가
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadUploadData().then(data => {
+        console.log("Firestore에서 불러온 데이터:", data);
+        if (data) {
+          setRawData(data.rawData || []);
+          setTempData(data.tempData || []);
+          setShoppingList(data.shoppingList || []);
+          setPlaceList(data.placeList || []);
+          setRate(data.rate || null);
+          setSingleRate(data.singleRate || null);
+          setCompareRate(data.compareRate || null);
+          setPlaceRate(data.placeRate || null);
+          setQuizRate(data.quizRate || null);
+          setSaveRate(data.saveRate || null);
+          setSave2Rate(data.save2Rate || null);
+          setKeepRate(data.keepRate || null);
+        } else {
+          // 데이터가 없을 때도 명확히 로그
+          console.log("Firestore에서 uploadData를 찾을 수 없습니다.");
+        }
+      }).catch(err => {
+        console.error("loadUploadData 에러:", err);
+      });
+    }
+  }, [isLoggedIn]);
+
   // 리포트 데이터 localStorage에서 불러오기
   useEffect(() => {
     if (typeof window !== "undefined") {

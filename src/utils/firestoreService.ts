@@ -56,6 +56,14 @@ export async function loadUploadData() {
       tempData: uploadData.tempData ? JSON.parse(uploadData.tempData) : [],
       shoppingList: uploadData.shoppingList ? JSON.parse(uploadData.shoppingList) : [],
       placeList: uploadData.placeList ? JSON.parse(uploadData.placeList) : [],
+      rate: uploadData.rate ?? null,
+      singleRate: uploadData.singleRate ?? null,
+      compareRate: uploadData.compareRate ?? null,
+      placeRate: uploadData.placeRate ?? null,
+      quizRate: uploadData.quizRate ?? null,
+      saveRate: uploadData.saveRate ?? null,
+      save2Rate: uploadData.save2Rate ?? null,
+      keepRate: uploadData.keepRate ?? null,
     };
   }
   return null;
