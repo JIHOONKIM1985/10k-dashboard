@@ -894,6 +894,7 @@ export default function Home() {
           />
           <div className="flex-1">
             <main className="p-8">
+              <div className="max-w-[1200px] mx-auto w-full">
               {/* LoginModal 분리: 기존 위치 삭제 */}
               {/* Raw 데이터 업로드: 최상단으로 복구 */}
               {isLoggedIn && (
@@ -919,67 +920,83 @@ export default function Home() {
                 <>
                   {/* RateDisplaySection 분리: 쇼핑 전체 등락률 */}
                   {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (
-                    <RateDisplaySection
-                      title="쇼핑 전체 등락률"
-                      data={getDisplayRate(rate, 'shopping')}
-                      isLoggedIn={isLoggedIn}
-                    />
+                    <div className="w-full">
+                      <RateDisplaySection
+                        title="쇼핑 전체 등락률"
+                        data={getDisplayRate(rate, 'shopping')}
+                        isLoggedIn={isLoggedIn}
+                      />
+                    </div>
                   )}
                   {/* RateDisplaySection 분리: 쇼핑 단일 등락률 */}
                   {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (
-                    <RateDisplaySection
-                      title="쇼핑[단일] 등락률"
-                      data={getDisplayRate(singleRate, 'shoppingSingle')}
-                      isLoggedIn={isLoggedIn}
-                    />
+                    <div className="w-full">
+                      <RateDisplaySection
+                        title="쇼핑[단일] 등락률"
+                        data={getDisplayRate(singleRate, 'shoppingSingle')}
+                        isLoggedIn={isLoggedIn}
+                      />
+                    </div>
                   )}
                   {/* RateDisplaySection 분리: 쇼핑 가격비교 등락률 */}
                   {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (
-                    <RateDisplaySection
-                      title="쇼핑[가격비교] 등락률"
-                      data={getDisplayRate(compareRate, 'shoppingCompare')}
-                      isLoggedIn={isLoggedIn}
-                    />
+                    <div className="w-full">
+                      <RateDisplaySection
+                        title="쇼핑[가격비교] 등락률"
+                        data={getDisplayRate(compareRate, 'shoppingCompare')}
+                        isLoggedIn={isLoggedIn}
+                      />
+                    </div>
                   )}
                   {/* RateDisplaySection 분리: 플레이스 전체 등락률 */}
                   {(activeMenu === 'dashboard' || activeMenu === 'place') && (
-                    <RateDisplaySection
-                      title="플레이스 전체 등락률"
-                      data={getDisplayRate(placeRate, 'place')}
-                      isLoggedIn={isLoggedIn}
-                    />
+                    <div className="w-full">
+                      <RateDisplaySection
+                        title="플레이스 전체 등락률"
+                        data={getDisplayRate(placeRate, 'place')}
+                        isLoggedIn={isLoggedIn}
+                      />
+                    </div>
                   )}
                   {/* RateDisplaySection 분리: 플레이스 퀴즈 등락률 */}
                   {(activeMenu === 'dashboard' || activeMenu === 'place') && (
-                    <RateDisplaySection
-                      title="플레이스 퀴즈 등락률"
-                      data={getDisplayRate(quizRate, 'quiz')}
-                      isLoggedIn={isLoggedIn}
-                    />
+                    <div className="w-full">
+                      <RateDisplaySection
+                        title="플레이스 퀴즈 등락률"
+                        data={getDisplayRate(quizRate, 'quiz')}
+                        isLoggedIn={isLoggedIn}
+                      />
+                    </div>
                   )}
                   {/* RateDisplaySection 분리: 플레이스 저장 등락률 */}
                   {(activeMenu === 'dashboard' || activeMenu === 'place') && (
-                    <RateDisplaySection
-                      title="플레이스 저장 등락률"
-                      data={getDisplayRate(saveRate, 'placeSave')}
-                      isLoggedIn={isLoggedIn}
-                    />
+                    <div className="w-full">
+                      <RateDisplaySection
+                        title="플레이스 저장 등락률"
+                        data={getDisplayRate(saveRate, 'placeSave')}
+                        isLoggedIn={isLoggedIn}
+                      />
+                    </div>
                   )}
                   {/* RateDisplaySection 분리: 플레이스 저장x2 등락률 */}
                   {(activeMenu === 'dashboard' || activeMenu === 'place') && (
-                    <RateDisplaySection
-                      title="플레이스 저장x2 등락률"
-                      data={getDisplayRate(save2Rate, 'placeSave2')}
-                      isLoggedIn={isLoggedIn}
-                    />
+                    <div className="w-full">
+                      <RateDisplaySection
+                        title="플레이스 저장x2 등락률"
+                        data={getDisplayRate(save2Rate, 'placeSave2')}
+                        isLoggedIn={isLoggedIn}
+                      />
+                    </div>
                   )}
                   {/* RateDisplaySection 분리: 플레이스 KEEP 등락률 */}
                   {(activeMenu === 'dashboard' || activeMenu === 'place') && (
-                    <RateDisplaySection
-                      title="플레이스 KEEP 등락률"
-                      data={getDisplayRate(keepRate, 'placeKeep')}
-                      isLoggedIn={isLoggedIn}
-                    />
+                    <div className="w-full">
+                      <RateDisplaySection
+                        title="플레이스 KEEP 등락률"
+                        data={getDisplayRate(keepRate, 'placeKeep')}
+                        isLoggedIn={isLoggedIn}
+                      />
+                    </div>
                   )}
                   {/* ShoppingTable 분리 */}
                   {(activeMenu === 'dashboard' || activeMenu === 'shopping') && shoppingList && shoppingList.length > 0 && (
@@ -1014,6 +1031,7 @@ export default function Home() {
                   )}
                 </>
               )}
+              </div>
             </main>
           </div>
         </div>
