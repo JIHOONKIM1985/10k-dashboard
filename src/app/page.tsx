@@ -1030,18 +1030,22 @@ export default function Home() {
             setIsLoggedIn={setIsLoggedIn}
             setLoginId={setLoginId}
             setLoginPw={setLoginPw}
+            onMenuClick={() => setMobileMenuOpen(false)} // 메뉴 클릭 시 자동 닫힘
           />
         </MobileSidebar>
-        <main className="w-full px-2 pt-14 pb-8 flex flex-col gap-4">
-            {/* 로그인/리포트/보정치/업로드/등락률 박스만 세로로 쭉 나열, 테이블/그래프/미리보기 등은 숨김 */}
-            {isLoggedIn && activeMenu === 'report' && (
-              <>
-                <div className="mb-4">
-                  <h1 className="text-lg font-bold mb-2 text-white">Raw 데이터를 업로드 해주세요</h1>
-                  <div className="bg-[#18181b] rounded-2xl shadow-lg p-4 border border-white/10">
-                    <ExcelUploader onData={handleUpload} />
-                  </div>
+        <main className="w-full px-4 pt-14 pb-8 flex flex-col gap-4">
+            {/* 모바일 대시보드/리포트/보정치 모두 상단에 업로드 안내 박스 노출 */}
+            {isLoggedIn && (
+              <div className="max-w-[420px] mx-auto w-full mt-8">
+                <h1 className="text-lg font-bold mb-4 text-white mt-4">Raw 데이터를 업로드 해주세요</h1>
+                <div className="bg-[#18181b] rounded-2xl shadow-lg p-4 border border-white/10 flex justify-center items-center min-h-[90px]">
+                  <ExcelUploader onData={handleUpload} />
                 </div>
+              </div>
+            )}
+            {/* 리포트 발행용 메뉴일 때만 집계 표 노출 */}
+            {isLoggedIn && activeMenu === 'report' && (
+              <div className="max-w-[420px] mx-auto w-full">
                 {/* 10K 광고 물량 집계 표 */}
                 <div className="w-full bg-[#232329] rounded-2xl p-6 shadow-lg border border-white/10 flex flex-col mb-8">
                   <div className="text-lg font-bold text-white mb-4">10K 광고 물량 파악</div>
@@ -1067,18 +1071,20 @@ export default function Home() {
                     </tbody>
                   </table>
                 </div>
-              </>
+              </div>
             )}
             {showCorrectionSetting ? (
-              <CorrectionSettings
-                correctionItems={correctionItems}
-                types={types}
-                correctionRange={correctionRange}
-                setCorrectionRange={setCorrectionRange}
-                saveAdjustment={handleSaveCorrection}
-                saveAdjustmentHistory={() => {}}
-                setShowCorrectionSetting={setShowCorrectionSetting}
-              />
+              <div className="max-w-[420px] mx-auto w-full">
+                <CorrectionSettings
+                  correctionItems={correctionItems}
+                  types={types}
+                  correctionRange={correctionRange}
+                  setCorrectionRange={setCorrectionRange}
+                  saveAdjustment={handleSaveCorrection}
+                  saveAdjustmentHistory={() => {}}
+                  setShowCorrectionSetting={setShowCorrectionSetting}
+                />
+              </div>
             ) : (
               <>
                 {/* 등락률 박스만 세로로 쭉 나열 */}
