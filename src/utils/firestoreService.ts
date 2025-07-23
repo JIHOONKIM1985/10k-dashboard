@@ -64,6 +64,7 @@ export async function loadUploadData() {
       saveRate: uploadData.saveRate ?? null,
       save2Rate: uploadData.save2Rate ?? null,
       keepRate: uploadData.keepRate ?? null,
+      reportRows: uploadData.reportRows ? JSON.parse(uploadData.reportRows) : [],
     };
   }
   return null;
@@ -107,4 +108,37 @@ export async function loadAdInflowHistory() {
     return data;
   }
   return {};
+}
+
+// reportMultiInputs Firestore에 저장
+export async function saveReportInputs(inputs: any) {
+  await setDoc(doc(db, "global", "reportInputs"), { ...inputs, updatedAt: Date.now() });
+}
+
+// reportMultiInputs Firestore에서 불러오기
+export async function loadReportInputs() {
+  const docRef = doc(db, "global", "reportInputs");
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    const { updatedAt, ...inputs } = data;
+    return inputs;
+  }
+  return {};
+}
+
+// reportDropdownOptions Firestore에 저장
+export async function saveReportDropdownOptions(options: string[]) {
+  await setDoc(doc(db, "global", "reportDropdownOptions"), { options, updatedAt: Date.now() });
+}
+
+// reportDropdownOptions Firestore에서 불러오기
+export async function loadReportDropdownOptions() {
+  const docRef = doc(db, "global", "reportDropdownOptions");
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    return Array.isArray(data.options) ? data.options : [];
+  }
+  return [];
 }

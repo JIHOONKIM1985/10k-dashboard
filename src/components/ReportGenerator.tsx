@@ -1,5 +1,5 @@
 import React from 'react';
-import { saveAdInflowSummary, loadAdInflowSummary, saveAdInflowHistory, loadAdInflowHistory } from '@/utils/firestoreService';
+import { saveAdInflowSummary, loadAdInflowSummary, saveAdInflowHistory, loadAdInflowHistory, saveReportDropdownOptions, loadReportDropdownOptions } from '@/utils/firestoreService';
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface ReportGeneratorProps {
@@ -34,6 +34,14 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
   const [inflowHistory, setInflowHistory] = React.useState<any>({});
   const [inflowChartData, setInflowChartData] = React.useState<any[]>([]);
   const [inflowPeriod, setInflowPeriod] = React.useState<'day' | 'week' | 'month'>('day');
+  const [newOption, setNewOption] = React.useState("");
+  const [pendingDropdownOptions, setPendingDropdownOptions] = React.useState<string[]>([]);
+  const [saveMessage, setSaveMessage] = React.useState("");
+
+  // Firestore에서 옵션 불러오면 pendingDropdownOptions도 동기화
+  React.useEffect(() => {
+    setPendingDropdownOptions(reportDropdownOptions);
+  }, [reportDropdownOptions]);
 
   // Firestore에서 집계 이력 불러오기
   React.useEffect(() => {
@@ -331,7 +339,56 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
       >
         {showRisePreview ? '상승 데이터 추적 숨기기' : '상승 데이터 추적 미리보기'}
       </button>
-      {/* ...상승 데이터 추적 미리보기 로직은 Home에서 복사해서 붙여넣기... */}
+      {showRisePreview && reportRows && reportRows.length > 0 && (
+        <div className="mb-8 overflow-x-auto">
+          <table className="w-full text-xs border border-blue-700/30 table-auto" style={{ tableLayout: 'auto' }}>
+            <thead>
+              <tr>
+                <th className="px-3 py-2 bg-[#232329] text-blue-300 font-semibold whitespace-nowrap">광고유형</th>
+                <th className="px-3 py-2 bg-[#232329] text-blue-300 font-semibold whitespace-nowrap">광고ID</th>
+                <th className="px-3 py-2 bg-[#232329] text-blue-300 font-semibold whitespace-nowrap">로그인ID</th>
+                <th className="px-3 py-2 bg-[#232329] text-blue-300 font-semibold whitespace-nowrap">광고시작일</th>
+                <th className="px-3 py-2 bg-[#232329] text-blue-300 font-semibold whitespace-nowrap">유입수</th>
+                <th className="px-3 py-2 bg-[#232329] text-blue-300 font-semibold whitespace-nowrap">순위키워드</th>
+                <th className="px-3 py-2 bg-[#232329] text-blue-300 font-semibold whitespace-nowrap">검색량</th>
+                <th className="px-3 py-2 bg-[#232329] text-blue-300 font-semibold whitespace-nowrap">D-DAY</th>
+                <th className="px-3 py-2 bg-[#232329] text-blue-300 font-semibold whitespace-nowrap">상승폭</th>
+                <th className="px-3 py-2 bg-[#232329] text-blue-300 font-semibold whitespace-nowrap">10K 슬롯ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reportRows.map(({ row }: any, idx: number) => {
+                const get = (col: string) => row && reportHeader ? row[reportHeader.indexOf(col)] : '';
+                const 광고유형 = get("광고유형");
+                const 광고ID = get("광고ID");
+                const 로그인ID = get("로그인ID");
+                const 광고시작일 = excelSerialToDate(get("광고시작일"));
+                const 유입수 = get("유입수");
+                const 순위키워드 = get("순위키워드");
+                const 검색량 = get("검색량");
+                const dday = get("D-Day");
+                const 최초순위 = get("최초순위");
+                const 상승폭 = (!isNaN(Number(최초순위)) && !isNaN(Number(dday))) ? Number(최초순위) - Number(dday) : '';
+                const 슬롯ID = get("슬롯ID");
+                return (
+                  <tr key={광고ID + '-' + 슬롯ID + '-' + idx} className={idx % 2 === 0 ? "bg-[#202024]" : "bg-[#18181b]"}>
+                    <td className="px-3 py-2 text-blue-100 whitespace-nowrap text-center">{광고유형}</td>
+                    <td className="px-3 py-2 text-blue-100 whitespace-nowrap text-center">{광고ID}</td>
+                    <td className="px-3 py-2 text-blue-100 whitespace-nowrap text-center">{로그인ID}</td>
+                    <td className="px-3 py-2 text-blue-100 whitespace-nowrap text-center">{광고시작일}</td>
+                    <td className="px-3 py-2 text-blue-100 whitespace-nowrap text-center">{유입수}</td>
+                    <td className="px-3 py-2 text-blue-100 whitespace-nowrap text-center">{순위키워드}</td>
+                    <td className="px-3 py-2 text-blue-100 whitespace-nowrap text-center">{검색량}</td>
+                    <td className="px-3 py-2 text-blue-100 whitespace-nowrap text-center">{dday}</td>
+                    <td className="px-3 py-2 text-green-400 font-bold whitespace-nowrap text-center">{상승폭}</td>
+                    <td className="px-3 py-2 text-blue-100 whitespace-nowrap text-center">{슬롯ID}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
       {/* 기존 리포트용 테이블 */}
       <div className="rounded-2xl shadow-2xl bg-gradient-to-br from-[#18181b] to-[#232329] border border-white/20 overflow-x-auto mt-8 p-4">
         <table className="w-full table-auto border-separate border-spacing-0 text-xs text-gray-200" style={{ tableLayout: 'auto' }}>
@@ -395,7 +452,7 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
             })}
             {/* GPT 리포트 2행 */}
             <tr>
-              <td colSpan={10} className="bg-[#232329] text-blue-400 font-bold px-4 py-2 text-xs rounded-t-lg">GPT리포트 : 최초 대비 오늘 상승폭이 큰 "쇼핑(가격비교)"상품</td>
+              <td colSpan={10} className="bg-[#232329] text-blue-400 font-bold px-4 py-2 text-xs rounded-t-lg">리포트 : 최초 대비 오늘 상승폭이 큰 "쇼핑(가격비교)"상품</td>
             </tr>
             <tr>
               <td colSpan={10} className="bg-[#18181b] text-white px-4 py-3 text-xs rounded-b-lg border-b border-white/10">
@@ -416,15 +473,59 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
         {/* 드롭다운 옵션 관리 UI */}
         <div className="mt-4 p-3 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl text-white shadow-lg border border-white/10">
           <div className="font-bold mb-2 text-xs text-gray-300">유입경로 옵션 관리</div>
-          <div className="flex gap-2 mb-2 flex-wrap">
-            {reportDropdownOptions.map((opt, i) => (
+          <div className="flex gap-2 mb-2 flex-wrap items-center">
+            {pendingDropdownOptions.map((opt, i) => (
               <span key={i} className="bg-gray-700 rounded px-2 py-1 flex items-center gap-1 text-xs shadow-sm border border-gray-600/30">
                 {opt}
-                <button onClick={() => setReportDropdownOptions(reportDropdownOptions.filter((_: string, idx: number) => idx !== i))} className="text-red-400 ml-1 text-xs px-1 py-0.5 rounded hover:bg-red-900/30">삭제</button>
+                <button onClick={() => setPendingDropdownOptions(pendingDropdownOptions.filter((_: string, idx: number) => idx !== i))} className="text-red-400 ml-1 text-xs px-1 py-0.5 rounded hover:bg-red-900/30">삭제</button>
               </span>
             ))}
-            <input value={""} onChange={() => {}} className="bg-[#18181b] text-white px-2 py-1 rounded text-xs border border-gray-500/30" placeholder="새 옵션" />
-            {/* 옵션 추가 로직은 Home에서 구현 */}
+            <input
+              value={newOption}
+              onChange={e => setNewOption(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && newOption.trim()) {
+                  if (!pendingDropdownOptions.includes(newOption.trim())) {
+                    setPendingDropdownOptions([...pendingDropdownOptions, newOption.trim()]);
+                  }
+                  setNewOption("");
+                }
+              }}
+              className="bg-[#18181b] text-white px-2 py-1 rounded text-xs border border-gray-500/30"
+              placeholder="새 옵션"
+            />
+            <button
+              className="ml-1 px-2 py-1 rounded bg-blue-700 text-xs text-white font-semibold hover:bg-blue-800 border border-blue-900/30"
+              onClick={() => {
+                if (newOption.trim() && !pendingDropdownOptions.includes(newOption.trim())) {
+                  setPendingDropdownOptions([...pendingDropdownOptions, newOption.trim()]);
+                }
+                setNewOption("");
+              }}
+              disabled={!newOption.trim()}
+            >
+              추가
+            </button>
+            <button
+              className="ml-2 px-3 py-1 rounded bg-green-600 text-xs text-white font-semibold hover:bg-green-700 border border-green-900/30"
+              onClick={async () => {
+                await saveReportDropdownOptions(pendingDropdownOptions);
+                setSaveMessage("저장되었습니다!");
+                setTimeout(() => setSaveMessage(""), 1500);
+                // Firestore에서 다시 불러와 동기화 (안정성)
+                const opts = await loadReportDropdownOptions();
+                if (Array.isArray(opts)) {
+                  setPendingDropdownOptions(opts);
+                  setReportDropdownOptions(opts);
+                } else {
+                  setReportDropdownOptions(pendingDropdownOptions);
+                }
+              }}
+              disabled={JSON.stringify(pendingDropdownOptions) === JSON.stringify(reportDropdownOptions)}
+            >
+              저장
+            </button>
+            {saveMessage && <span className="ml-2 text-green-400 text-xs">{saveMessage}</span>}
           </div>
         </div>
       </div>

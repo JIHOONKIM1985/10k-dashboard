@@ -16,7 +16,9 @@ import {
   saveGuestRates, loadGuestRates,
   saveCorrectionRange, loadCorrectionRange,
   saveUploadData, loadUploadData,
-  saveAdInflowHistory
+  saveAdInflowHistory,
+  saveReportInputs, loadReportInputs,
+  saveReportDropdownOptions, loadReportDropdownOptions
 } from "@/utils/firestoreService";
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
@@ -98,6 +100,7 @@ export default function Home() {
   });
   const [activeHandle, setActiveHandle] = useState<string | null>(null);
   const [guestRates, setGuestRates] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // 리포트 발행용 관련 state (중복 선언 없이 한 번만)
   const [reportMultiInputs, setReportMultiInputs] = useState<Record<string, { keywordCount: string; channels: string[] }>>({});
@@ -344,6 +347,7 @@ export default function Home() {
   // 로그인 후 Firestore에서 데이터를 불러와서 state에 세팅하는 useEffect 추가
   useEffect(() => {
     if (isLoggedIn) {
+      setIsLoading(true);
       loadUploadData().then(data => {
         console.log("Firestore에서 불러온 데이터:", data);
         if (data) {
@@ -359,12 +363,15 @@ export default function Home() {
           setSaveRate(data.saveRate || null);
           setSave2Rate(data.save2Rate || null);
           setKeepRate(data.keepRate || null);
+          // setReportRows(data.reportRows ? JSON.parse(data.reportRows) : []); // Firestore에서 reportRows 불러오기 제거
         } else {
           // 데이터가 없을 때도 명확히 로그
           console.log("Firestore에서 uploadData를 찾을 수 없습니다.");
         }
+        setIsLoading(false);
       }).catch(err => {
         console.error("loadUploadData 에러:", err);
+        setIsLoading(false);
       });
     }
   }, [isLoggedIn]);
@@ -423,7 +430,9 @@ export default function Home() {
 
   // 리포트 발행용 데이터 추출 (쇼핑[가격비교] TOP5) - Raw 데이터 기반으로 변경
   useEffect(() => {
-    if (!rawData || rawData.length === 0) return;
+    if (isLoading) return; // 로딩 중에는 계산하지 않음
+    if (!rawData || rawData.length < 2) return; // 헤더+최소 1행일 때만 계산
+    if (activeMenu !== 'report') return; // 리포트 발행용 메뉴일 때만 계산
     const header = rawData[0];
     setReportHeader(header);
     const rows = rawData.slice(1);
@@ -452,8 +461,8 @@ export default function Home() {
       .filter(item => !isNaN(item.diff) && item.diff > 0) // 양수 상승폭만 필터
       .sort((a, b) => b.diff - a.diff)
       // 순위키워드 중복 제거 (첫 번째만 유지)
-      .reduce((acc, item) => {
-        const existing = acc.find(existing => existing.순위키워드 === item.순위키워드);
+      .reduce((acc: any[], item: any) => {
+        const existing = acc.find((existing: any) => existing.순위키워드 === item.순위키워드);
         if (!existing) {
           acc.push(item);
         }
@@ -461,7 +470,7 @@ export default function Home() {
       }, [] as any[])
       .slice(0, 5);
     setReportRows(topRows);
-  }, [rawData]);
+  }, [rawData, isLoading, activeMenu]);
 
 
 
@@ -491,10 +500,42 @@ export default function Home() {
     setKeepRate(newKeepRate);
     setShoppingList(newShoppingList);
     setPlaceList(newPlaceList);
-    
+
     // 리포트 데이터는 유지 (localStorage에 저장된 데이터 사용)
     // reportMultiInputs와 reportDropdownOptions는 그대로 유지
-    
+
+    // Top5 reportRows 계산 및 저장
+    const header = data[0];
+    const rows = data.slice(1);
+    const idx = (name: string) => findColumnIndex(header, name);
+    const filtered = rows.filter(row => 
+      row[idx("광고유형")] === "쇼핑(가격비교)" && 
+      !isNaN(Number(row[idx("D-Day")])) && 
+      !isNaN(Number(row[idx("최초순위")]))
+    );
+    const topRows = filtered
+      .map(row => {
+        const 최초순위 = Number(row[idx("최초순위")]) || 0;
+        const dday = Number(row[idx("D-Day")]) || 0;
+        const diff = 최초순위 - dday;
+        return {
+          row,
+          diff,
+          광고ID: row[idx("광고ID")] || '',
+          슬롯ID: row[idx("슬롯ID")] || '',
+          순위키워드: row[idx("순위키워드")] || '',
+        };
+      })
+      .filter(item => !isNaN(item.diff) && item.diff > 0)
+      .sort((a, b) => b.diff - a.diff)
+      .reduce((acc, item) => {
+        const existing = acc.find(existing => existing.순위키워드 === item.순위키워드);
+        if (!existing) acc.push(item);
+        return acc;
+      }, [] as any[])
+      .slice(0, 5);
+    setReportRows(topRows);
+
     // localStorage에 저장
     localStorage.setItem('dashboardData', JSON.stringify({
       rawData: data,
@@ -509,6 +550,7 @@ export default function Home() {
       keepRate: newKeepRate,
       shoppingList: newShoppingList,
       placeList: newPlaceList,
+      reportRows: JSON.stringify(topRows),
     }));
 
     // Firestore에 업로드 데이터 저장 (2차원 배열은 JSON 문자열로 저장)
@@ -525,6 +567,8 @@ export default function Home() {
       keepRate: newKeepRate,
       shoppingList: JSON.stringify(newShoppingList),
       placeList: JSON.stringify(newPlaceList),
+      // reportRows 저장 제거
+      // reportRows: JSON.stringify(topRows),
       updatedAt: Date.now(), // 저장 시각 등 추가 가능
     });
 
@@ -856,6 +900,32 @@ export default function Home() {
     }
   }
   const formatNumber = (num: number) => num.toLocaleString('ko-KR');
+
+  // 로그인 시 Firestore에서 reportMultiInputs, reportDropdownOptions 불러오기
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadReportInputs().then(inputs => {
+        setReportMultiInputs(inputs || {});
+      });
+      loadReportDropdownOptions().then(options => {
+        setReportDropdownOptions(options && options.length > 0 ? options : ["가격비교검색", "통합검색"]);
+      });
+    }
+  }, [isLoggedIn]);
+
+  // reportMultiInputs 변경 시 Firestore에 저장
+  useEffect(() => {
+    if (isLoggedIn) {
+      saveReportInputs(reportMultiInputs);
+    }
+  }, [reportMultiInputs, isLoggedIn]);
+
+  // reportDropdownOptions 변경 시 Firestore에 저장
+  useEffect(() => {
+    if (isLoggedIn) {
+      saveReportDropdownOptions(reportDropdownOptions);
+    }
+  }, [reportDropdownOptions, isLoggedIn]);
 
   if (!isClient) {
     return (
