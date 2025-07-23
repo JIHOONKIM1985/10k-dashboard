@@ -193,6 +193,10 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
       </div>
     );
   };
+  // 모바일 환경 감지
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  // 모바일 분기 제거, 모든 UI는 PC에서만 노출
   return (
     <div className="mt-8">
       {/* 10K 광고 물량 파악 섹션 */}

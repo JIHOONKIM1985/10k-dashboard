@@ -1,6 +1,9 @@
+"use client";
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import React, { useState } from 'react';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,23 +15,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "10K Dashboard",
-  description: "10K 대시보드",
-  icons: {
-    icon: "/favicon.ico",
-  },
-};
+// 모바일 헤더는 항상 상단에 고정 (높이 56px = 14*4)
+function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
+  return (
+    <header className="md:hidden fixed top-0 left-0 w-full z-50 flex items-center justify-between px-4 py-3 bg-[#18181b] border-b border-white/10 h-14">
+      <button onClick={onMenuClick} className="p-2"><svg width="28" height="28" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <span className="text-lg font-bold text-white">10K</span>
+    </header>
+  );
+}
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
       <body>
-        {/* InitFirestore는 반드시 클라이언트 환경에서만 동작해야 함 (SSR에서 window/document 사용 금지) */}
+        {/* 모바일 헤더만, MobileSidebar는 page.tsx에서 관리 */}
+        <MobileHeader onMenuClick={() => {
+          if (typeof window !== 'undefined') {
+            const event = new CustomEvent('openMobileSidebar');
+            window.dispatchEvent(event);
+          }
+        }} />
+        {/* (모바일 컨텐츠에는 pt-14로 헤더 높이만큼 여백을 둘 것) */}
         {children}
       </body>
     </html>

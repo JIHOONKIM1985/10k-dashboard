@@ -27,9 +27,10 @@ const CorrectionSettings: React.FC<CorrectionSettingsProps> = ({
             {item.label}
             <sup className="ml-2 text-xs text-gray-400 sup-top-align">(어제대비)</sup>
           </div>
+          {/* 모바일: grid-cols-1, PC: grid-cols-3 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {types.map(type => (
-              <div key={type.key} className="bg-[#232329] rounded-2xl p-6 flex flex-col items-center shadow-lg border border-white/10 min-w-[220px]">
+              <div key={type.key} className="bg-[#232329] rounded-2xl p-6 flex flex-col items-center shadow-lg border border-white/10 min-w-[220px] w-full">
                 <span className={`font-semibold text-lg mb-2 text-${type.color}-400`}>{type.label}</span>
                 <div className="relative w-full flex flex-col items-center mb-2">
                   <Slider
@@ -69,9 +70,10 @@ const CorrectionSettings: React.FC<CorrectionSettingsProps> = ({
           </div>
         </div>
       ))}
-      <div className="flex gap-4 mt-8">
+      {/* 모바일: 버튼 세로 배치, PC: 가로 배치 */}
+      <div className="flex flex-col md:flex-row gap-4 mt-8 w-full">
         <button
-          className="px-6 py-2 rounded text-sm font-bold bg-green-500 text-white transition"
+          className="px-6 py-2 rounded text-sm font-bold bg-green-500 text-white transition w-full md:w-auto"
           onClick={() => {
             saveAdjustment(correctionRange).then(() => {
               saveAdjustmentHistory(correctionRange, Date.now());
@@ -83,13 +85,13 @@ const CorrectionSettings: React.FC<CorrectionSettingsProps> = ({
           보정치 저장
         </button>
         <button
-          className="px-6 py-2 rounded text-sm font-bold bg-gray-500 text-white transition"
+          className="px-6 py-2 rounded text-sm font-bold bg-gray-500 text-white transition w-full md:w-auto"
           onClick={() => setCorrectionRange({})}
         >
           초기화
         </button>
         <button
-          className="px-6 py-2 rounded text-sm font-bold bg-gray-600 text-white transition"
+          className="px-6 py-2 rounded text-sm font-bold bg-gray-600 text-white transition w-full md:w-auto"
           onClick={() => { setShowCorrectionSetting(false); }}
         >
           취소

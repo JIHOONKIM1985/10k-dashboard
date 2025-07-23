@@ -28,6 +28,17 @@ import RateDisplaySection from '@/components/RateDisplaySection';
 import ShoppingTable from '@/components/ShoppingTable';
 import PlaceTable from '@/components/PlaceTable';
 import ReportGenerator from '@/components/ReportGenerator';
+// MobileSidebar 컴포넌트 복사 (layout.tsx에서 삭제했으므로)
+function MobileSidebar({ open, onClose, children }: { open: boolean, onClose: () => void, children: React.ReactNode }) {
+  return (
+    <div className={`fixed inset-0 z-50 transition ${open ? 'block' : 'hidden'}`}>
+      <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
+      <aside className="absolute left-2 top-14 h-fit max-h-[calc(100vh-56px)] w-80 overflow-y-auto animate-slideIn">
+        {children}
+      </aside>
+    </div>
+  );
+}
 
 export default function Home() {
   // 모든 useState, useEffect 등 Hook 선언을 컴포넌트 최상단에 위치
@@ -312,25 +323,14 @@ export default function Home() {
     }
   }, []);
 
+  // Firestore에서 보정치(correctionRange) 항상 불러오기
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem('correctionRange');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          setCorrectionRange(parsed);
-        } catch {
-          // 파싱 실패 시 기본값 유지
-        }
-      }
+    async function fetchCorrectionRange() {
+      const range = await loadCorrectionRange();
+      if (range) setCorrectionRange(range);
     }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem('correctionRange', JSON.stringify(correctionRange));
-    }
-  }, [correctionRange]);
+    fetchCorrectionRange();
+  }, [isLoggedIn, showCorrectionSetting]);
 
   useEffect(() => {
     if (!isLoggedIn && typeof window !== 'undefined') {
@@ -841,6 +841,36 @@ export default function Home() {
     return guestRates[typeKey] || { 상승: 0, 유지: 0, 하락: 0 };
   };
 
+  // 모바일 슬라이드 메뉴 상태
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useEffect(() => {
+    // 햄버거 버튼 클릭 이벤트 리스너
+    const openHandler = () => setMobileMenuOpen(true);
+    window.addEventListener('openMobileSidebar', openHandler);
+    return () => window.removeEventListener('openMobileSidebar', openHandler);
+  }, []);
+
+  // 광고유형별 유입수 집계 로직 (ReportGenerator와 동일)
+  const adTypes = ['쇼핑(가격비교)', '쇼핑(단일)', '플레이스퀴즈', '저장하기', '저장x2', 'KEEP', '쿠팡'];
+  let adTypeIdx = -1, inflowIdx = -1;
+  if (rawData && rawData.length > 0) {
+    adTypeIdx = rawData[0].findIndex((h: string) => h.replace(/\s/g, '').includes('광고유형'));
+    inflowIdx = rawData[0].findIndex((h: string) => h.replace(/\s/g, '').includes('유입수'));
+  }
+  const inflowSummary: Record<string, number> = {};
+  let total = 0;
+  if (adTypeIdx !== -1 && inflowIdx !== -1) {
+    for (let i = 1; i < rawData.length; i++) {
+      const type = rawData[i][adTypeIdx];
+      const inflow = Number(rawData[i][inflowIdx]) || 0;
+      if (adTypes.includes(type)) {
+        inflowSummary[type] = (inflowSummary[type] || 0) + inflow;
+        total += inflow;
+      }
+    }
+  }
+  const formatNumber = (num: number) => num.toLocaleString('ko-KR');
+
   if (!isClient) {
     return (
       <div className="w-full min-h-screen bg-black flex items-center justify-center">
@@ -851,149 +881,277 @@ export default function Home() {
 
   return (
     <div className="w-full min-h-screen bg-black">
-      <div className="flex justify-center min-h-screen">
-        {/* Sidebar 분리 */}
-        <Sidebar
-          activeMenu={activeMenu}
-          setActiveMenu={setActiveMenu}
-          isLoggedIn={isLoggedIn}
-          setShowLogin={setShowLogin}
-          setShowCorrectionSetting={setShowCorrectionSetting}
-          setIsLoggedIn={setIsLoggedIn}
-          setLoginId={setLoginId}
-          setLoginPw={setLoginPw}
-        />
-        {/* 메인 컨텐츠 */}
-        <main className="w-[1440px] max-w-none p-8">
-          {/* LoginModal 분리 */}
-          <LoginModal
-            showLogin={showLogin}
+      {/* PC: flex row로 Sidebar + MainContent */}
+      <div className="hidden md:flex min-h-screen w-full bg-black justify-center">
+        <div className="w-full max-w-[1440px] mx-auto flex flex-row">
+          <Sidebar
+            activeMenu={activeMenu}
+            setActiveMenu={setActiveMenu}
+            isLoggedIn={isLoggedIn}
             setShowLogin={setShowLogin}
-            loginId={loginId}
+            setShowCorrectionSetting={setShowCorrectionSetting}
+            setIsLoggedIn={setIsLoggedIn}
             setLoginId={setLoginId}
-            loginPw={loginPw}
             setLoginPw={setLoginPw}
-            handleLogin={handleLogin}
           />
-          {/* Raw 데이터 업로드: 최상단으로 복구 */}
-          {isLoggedIn && (
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold mb-4">Raw 데이터를 업로드 해주세요</h1>
-              <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 border border-white/10">
-                <ExcelUploader onData={handleUpload} />
-              </div>
-            </div>
-          )}
-          {/* CorrectionSettings 분리 */}
-          {showCorrectionSetting ? (
-            <CorrectionSettings
-              correctionItems={correctionItems}
-              types={types}
-              correctionRange={correctionRange}
-              setCorrectionRange={setCorrectionRange}
-              saveAdjustment={handleSaveCorrection}
-              saveAdjustmentHistory={() => {}} // FirestoreService에서 제공하지 않는 함수
-              setShowCorrectionSetting={setShowCorrectionSetting}
-            />
-          ) : (
-            <>
-              {/* RateDisplaySection 분리: 쇼핑 전체 등락률 */}
-              {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (
-                <RateDisplaySection
-                  title="쇼핑 전체 등락률"
-                  data={getDisplayRate(rate, 'shopping')}
-                  isLoggedIn={isLoggedIn}
-                />
+          <div className="flex-1">
+            <main className="p-8">
+              {/* LoginModal 분리 */}
+              <LoginModal
+                showLogin={showLogin}
+                setShowLogin={setShowLogin}
+                loginId={loginId}
+                setLoginId={setLoginId}
+                loginPw={loginPw}
+                setLoginPw={setLoginPw}
+                handleLogin={handleLogin}
+              />
+              {/* Raw 데이터 업로드: 최상단으로 복구 */}
+              {isLoggedIn && (
+                <div className="mb-8">
+                  <h1 className="text-2xl font-bold mb-4">Raw 데이터를 업로드 해주세요</h1>
+                  <div className="bg-[#18181b] rounded-2xl shadow-lg p-6 border border-white/10">
+                    <ExcelUploader onData={handleUpload} />
+                  </div>
+                </div>
               )}
-              {/* RateDisplaySection 분리: 쇼핑 단일 등락률 */}
-              {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (
-                <RateDisplaySection
-                  title="쇼핑[단일] 등락률"
-                  data={getDisplayRate(singleRate, 'shoppingSingle')}
-                  isLoggedIn={isLoggedIn}
+              {/* CorrectionSettings 분리 */}
+              {showCorrectionSetting ? (
+                <CorrectionSettings
+                  correctionItems={correctionItems}
+                  types={types}
+                  correctionRange={correctionRange}
+                  setCorrectionRange={setCorrectionRange}
+                  saveAdjustment={handleSaveCorrection}
+                  saveAdjustmentHistory={() => {}} // FirestoreService에서 제공하지 않는 함수
+                  setShowCorrectionSetting={setShowCorrectionSetting}
                 />
-              )}
-              {/* RateDisplaySection 분리: 쇼핑 가격비교 등락률 */}
-              {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (
-                <RateDisplaySection
-                  title="쇼핑[가격비교] 등락률"
-                  data={getDisplayRate(compareRate, 'shoppingCompare')}
-                  isLoggedIn={isLoggedIn}
-                />
-              )}
-              {/* RateDisplaySection 분리: 플레이스 전체 등락률 */}
-              {(activeMenu === 'dashboard' || activeMenu === 'place') && (
-                <RateDisplaySection
-                  title="플레이스 전체 등락률"
-                  data={getDisplayRate(placeRate, 'place')}
-                  isLoggedIn={isLoggedIn}
-                />
-              )}
-              {/* RateDisplaySection 분리: 플레이스 퀴즈 등락률 */}
-              {(activeMenu === 'dashboard' || activeMenu === 'place') && (
-                <RateDisplaySection
-                  title="플레이스 퀴즈 등락률"
-                  data={getDisplayRate(quizRate, 'quiz')}
-                  isLoggedIn={isLoggedIn}
-                />
-              )}
-              {/* RateDisplaySection 분리: 플레이스 저장 등락률 */}
-              {(activeMenu === 'dashboard' || activeMenu === 'place') && (
-                <RateDisplaySection
-                  title="플레이스 저장 등락률"
-                  data={getDisplayRate(saveRate, 'placeSave')}
-                  isLoggedIn={isLoggedIn}
-                />
-              )}
-              {/* RateDisplaySection 분리: 플레이스 저장x2 등락률 */}
-              {(activeMenu === 'dashboard' || activeMenu === 'place') && (
-                <RateDisplaySection
-                  title="플레이스 저장x2 등락률"
-                  data={getDisplayRate(save2Rate, 'placeSave2')}
-                  isLoggedIn={isLoggedIn}
-                />
-              )}
-              {/* RateDisplaySection 분리: 플레이스 KEEP 등락률 */}
-              {(activeMenu === 'dashboard' || activeMenu === 'place') && (
-                <RateDisplaySection
-                  title="플레이스 KEEP 등락률"
-                  data={getDisplayRate(keepRate, 'placeKeep')}
-                  isLoggedIn={isLoggedIn}
-                />
-              )}
-              {/* ShoppingTable 분리 */}
-              {(activeMenu === 'dashboard' || activeMenu === 'shopping') && shoppingList && shoppingList.length > 0 && (
+              ) : (
                 <>
-                  <div className="text-lg font-semibold mt-12 mb-4 text-white">네이버 쇼핑 데이터</div>
-                  <ShoppingTable header={shoppingDashboardHeader} data={shoppingList} />
+                  {/* RateDisplaySection 분리: 쇼핑 전체 등락률 */}
+                  {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (
+                    <RateDisplaySection
+                      title="쇼핑 전체 등락률"
+                      data={getDisplayRate(rate, 'shopping')}
+                      isLoggedIn={isLoggedIn}
+                    />
+                  )}
+                  {/* RateDisplaySection 분리: 쇼핑 단일 등락률 */}
+                  {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (
+                    <RateDisplaySection
+                      title="쇼핑[단일] 등락률"
+                      data={getDisplayRate(singleRate, 'shoppingSingle')}
+                      isLoggedIn={isLoggedIn}
+                    />
+                  )}
+                  {/* RateDisplaySection 분리: 쇼핑 가격비교 등락률 */}
+                  {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (
+                    <RateDisplaySection
+                      title="쇼핑[가격비교] 등락률"
+                      data={getDisplayRate(compareRate, 'shoppingCompare')}
+                      isLoggedIn={isLoggedIn}
+                    />
+                  )}
+                  {/* RateDisplaySection 분리: 플레이스 전체 등락률 */}
+                  {(activeMenu === 'dashboard' || activeMenu === 'place') && (
+                    <RateDisplaySection
+                      title="플레이스 전체 등락률"
+                      data={getDisplayRate(placeRate, 'place')}
+                      isLoggedIn={isLoggedIn}
+                    />
+                  )}
+                  {/* RateDisplaySection 분리: 플레이스 퀴즈 등락률 */}
+                  {(activeMenu === 'dashboard' || activeMenu === 'place') && (
+                    <RateDisplaySection
+                      title="플레이스 퀴즈 등락률"
+                      data={getDisplayRate(quizRate, 'quiz')}
+                      isLoggedIn={isLoggedIn}
+                    />
+                  )}
+                  {/* RateDisplaySection 분리: 플레이스 저장 등락률 */}
+                  {(activeMenu === 'dashboard' || activeMenu === 'place') && (
+                    <RateDisplaySection
+                      title="플레이스 저장 등락률"
+                      data={getDisplayRate(saveRate, 'placeSave')}
+                      isLoggedIn={isLoggedIn}
+                    />
+                  )}
+                  {/* RateDisplaySection 분리: 플레이스 저장x2 등락률 */}
+                  {(activeMenu === 'dashboard' || activeMenu === 'place') && (
+                    <RateDisplaySection
+                      title="플레이스 저장x2 등락률"
+                      data={getDisplayRate(save2Rate, 'placeSave2')}
+                      isLoggedIn={isLoggedIn}
+                    />
+                  )}
+                  {/* RateDisplaySection 분리: 플레이스 KEEP 등락률 */}
+                  {(activeMenu === 'dashboard' || activeMenu === 'place') && (
+                    <RateDisplaySection
+                      title="플레이스 KEEP 등락률"
+                      data={getDisplayRate(keepRate, 'placeKeep')}
+                      isLoggedIn={isLoggedIn}
+                    />
+                  )}
+                  {/* ShoppingTable 분리 */}
+                  {(activeMenu === 'dashboard' || activeMenu === 'shopping') && shoppingList && shoppingList.length > 0 && (
+                    <>
+                      <div className="text-lg font-semibold mt-12 mb-4 text-white">네이버 쇼핑 데이터</div>
+                      <ShoppingTable header={shoppingDashboardHeader} data={shoppingList} />
+                    </>
+                  )}
+                  {/* PlaceTable 분리 */}
+                  {(activeMenu === 'dashboard' || activeMenu === 'place') && placeList && placeList.length > 0 && (
+                    <>
+                      <div className="text-lg font-semibold mt-12 mb-4 text-white">네이버 플레이스 데이터</div>
+                      <PlaceTable header={placeDashboardHeader} data={placeList} />
+                    </>
+                  )}
+                  {/* ReportGenerator 분리 */}
+                  {activeMenu === 'report' && (
+                    <ReportGenerator
+                      rawData={rawData}
+                      reportRows={reportRows}
+                      reportHeader={reportHeader}
+                      reportMultiInputs={reportMultiInputs}
+                      setReportMultiInputs={setReportMultiInputs}
+                      reportDropdownOptions={reportDropdownOptions}
+                      setReportDropdownOptions={setReportDropdownOptions}
+                      showRawPreview={showRawPreview}
+                      setShowRawPreview={setShowRawPreview}
+                      showRisePreview={showRisePreview}
+                      setShowRisePreview={setShowRisePreview}
+                      excelSerialToDate={excelSerialToDate}
+                    />
+                  )}
                 </>
               )}
-              {/* PlaceTable 분리 */}
-              {(activeMenu === 'dashboard' || activeMenu === 'place') && placeList && placeList.length > 0 && (
-                <>
-                  <div className="text-lg font-semibold mt-12 mb-4 text-white">네이버 플레이스 데이터</div>
-                  <PlaceTable header={placeDashboardHeader} data={placeList} />
-                </>
-              )}
-              {/* ReportGenerator 분리 */}
-              {activeMenu === 'report' && (
-                <ReportGenerator
-                  rawData={rawData}
-                  reportRows={reportRows}
-                  reportHeader={reportHeader}
-                  reportMultiInputs={reportMultiInputs}
-                  setReportMultiInputs={setReportMultiInputs}
-                  reportDropdownOptions={reportDropdownOptions}
-                  setReportDropdownOptions={setReportDropdownOptions}
-                  showRawPreview={showRawPreview}
-                  setShowRawPreview={setShowRawPreview}
-                  showRisePreview={showRisePreview}
-                  setShowRisePreview={setShowRisePreview}
-                  excelSerialToDate={excelSerialToDate}
-                />
-              )}
-            </>
-          )}
+            </main>
+          </div>
+        </div>
+      </div>
+      {/* 모바일: MainContent + MobileSidebar(햄버거/슬라이드) */}
+      <div className="block md:hidden w-full min-h-screen bg-black">
+        <MobileSidebar open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
+          <Sidebar
+            activeMenu={activeMenu}
+            setActiveMenu={setActiveMenu}
+            isLoggedIn={isLoggedIn}
+            setShowLogin={setShowLogin}
+            setShowCorrectionSetting={setShowCorrectionSetting}
+            setIsLoggedIn={setIsLoggedIn}
+            setLoginId={setLoginId}
+            setLoginPw={setLoginPw}
+          />
+        </MobileSidebar>
+        <main className="w-full px-2 pt-14 pb-8 flex flex-col gap-4">
+            {/* 로그인/리포트/보정치/업로드/등락률 박스만 세로로 쭉 나열, 테이블/그래프/미리보기 등은 숨김 */}
+            {isLoggedIn && activeMenu === 'report' && (
+              <>
+                <div className="mb-4">
+                  <h1 className="text-lg font-bold mb-2 text-white">Raw 데이터를 업로드 해주세요</h1>
+                  <div className="bg-[#18181b] rounded-2xl shadow-lg p-4 border border-white/10">
+                    <ExcelUploader onData={handleUpload} />
+                  </div>
+                </div>
+                {/* 10K 광고 물량 집계 표 */}
+                <div className="w-full bg-[#232329] rounded-2xl p-6 shadow-lg border border-white/10 flex flex-col mb-8">
+                  <div className="text-lg font-bold text-white mb-4">10K 광고 물량 파악</div>
+                  <div className="text-base font-semibold text-white mb-2">어제 집행 물량 집계</div>
+                  <table className="w-full text-xs border border-white/10 bg-[#18181b] rounded-xl">
+                    <thead>
+                      <tr>
+                        <th className="px-3 py-2 text-gray-300 border-b border-white/10">광고유형</th>
+                        <th className="px-3 py-2 text-gray-300 border-b border-white/10">유입수</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adTypes.map(type => (
+                        <tr key={type}>
+                          <td className="px-3 py-2 text-white border-b border-white/10">{type}</td>
+                          <td className="px-3 py-2 text-white border-b border-white/10 text-right">{formatNumber((inflowSummary && inflowSummary[type]) || 0)}</td>
+                        </tr>
+                      ))}
+                      <tr>
+                        <td className="px-3 py-2 font-bold text-blue-400">총 집행물량</td>
+                        <td className="px-3 py-2 font-bold text-blue-400 text-right">{formatNumber((typeof total !== 'undefined' && total) || 0)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+            {showCorrectionSetting ? (
+              <CorrectionSettings
+                correctionItems={correctionItems}
+                types={types}
+                correctionRange={correctionRange}
+                setCorrectionRange={setCorrectionRange}
+                saveAdjustment={handleSaveCorrection}
+                saveAdjustmentHistory={() => {}}
+                setShowCorrectionSetting={setShowCorrectionSetting}
+              />
+            ) : (
+              <>
+                {/* 등락률 박스만 세로로 쭉 나열 */}
+                {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (
+                  <RateDisplaySection
+                    title="쇼핑 전체 등락률"
+                    data={getDisplayRate(rate, 'shopping')}
+                    isLoggedIn={isLoggedIn}
+                  />
+                )}
+                {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (
+                  <RateDisplaySection
+                    title="쇼핑[단일] 등락률"
+                    data={getDisplayRate(singleRate, 'shoppingSingle')}
+                    isLoggedIn={isLoggedIn}
+                  />
+                )}
+                {(activeMenu === 'dashboard' || activeMenu === 'shopping') && (
+                  <RateDisplaySection
+                    title="쇼핑[가격비교] 등락률"
+                    data={getDisplayRate(compareRate, 'shoppingCompare')}
+                    isLoggedIn={isLoggedIn}
+                  />
+                )}
+                {(activeMenu === 'dashboard' || activeMenu === 'place') && (
+                  <RateDisplaySection
+                    title="플레이스 전체 등락률"
+                    data={getDisplayRate(placeRate, 'place')}
+                    isLoggedIn={isLoggedIn}
+                  />
+                )}
+                {(activeMenu === 'dashboard' || activeMenu === 'place') && (
+                  <RateDisplaySection
+                    title="플레이스 퀴즈 등락률"
+                    data={getDisplayRate(quizRate, 'quiz')}
+                    isLoggedIn={isLoggedIn}
+                  />
+                )}
+                {(activeMenu === 'dashboard' || activeMenu === 'place') && (
+                  <RateDisplaySection
+                    title="플레이스 저장 등락률"
+                    data={getDisplayRate(saveRate, 'placeSave')}
+                    isLoggedIn={isLoggedIn}
+                  />
+                )}
+                {(activeMenu === 'dashboard' || activeMenu === 'place') && (
+                  <RateDisplaySection
+                    title="플레이스 저장x2 등락률"
+                    data={getDisplayRate(save2Rate, 'placeSave2')}
+                    isLoggedIn={isLoggedIn}
+                  />
+                )}
+                {(activeMenu === 'dashboard' || activeMenu === 'place') && (
+                  <RateDisplaySection
+                    title="플레이스 KEEP 등락률"
+                    data={getDisplayRate(keepRate, 'placeKeep')}
+                    isLoggedIn={isLoggedIn}
+                  />
+                )}
+                {/* 테이블/그래프/미리보기/리포트 등은 모바일에서 숨김 */}
+              </>
+            )}
         </main>
       </div>
     </div>
