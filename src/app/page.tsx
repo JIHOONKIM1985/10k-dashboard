@@ -332,21 +332,7 @@ export default function Home() {
     fetchCorrectionRange();
   }, [isLoggedIn, showCorrectionSetting]);
 
-  useEffect(() => {
-    if (!isLoggedIn && typeof window !== 'undefined') {
-      const keys = [
-        'shopping', 'shoppingSingle', 'shoppingCompare',
-        'place', 'quiz', 'placeSave', 'placeSave2', 'placeKeep'
-      ];
-      const newGuestRates: any = {};
-      keys.forEach(key => {
-        newGuestRates[key] = getCorrectedRates(null, correctionRange, key);
-      });
-      localStorage.setItem('guestRates', JSON.stringify(newGuestRates));
-      setGuestRates(newGuestRates);
-    }
-  }, [isLoggedIn, correctionRange]);
-
+  // 비로그인 시 guestRates는 Firestore에서만 불러오고, correctionRange와 무관하게 항상 고정
   useEffect(() => {
     if (!isLoggedIn) {
       loadGuestRates().then(rates => {
@@ -881,6 +867,18 @@ export default function Home() {
 
   return (
     <div className="w-full min-h-screen bg-black">
+      {/* LoginModal: PC/모바일 공통 루트에서 조건부 렌더링 */}
+      {showLogin && (
+        <LoginModal
+          showLogin={showLogin}
+          setShowLogin={setShowLogin}
+          loginId={loginId}
+          setLoginId={setLoginId}
+          loginPw={loginPw}
+          setLoginPw={setLoginPw}
+          handleLogin={handleLogin}
+        />
+      )}
       {/* PC: flex row로 Sidebar + MainContent */}
       <div className="hidden md:flex min-h-screen w-full bg-black justify-center">
         <div className="w-full max-w-[1440px] mx-auto flex flex-row">
@@ -896,16 +894,7 @@ export default function Home() {
           />
           <div className="flex-1">
             <main className="p-8">
-              {/* LoginModal 분리 */}
-              <LoginModal
-                showLogin={showLogin}
-                setShowLogin={setShowLogin}
-                loginId={loginId}
-                setLoginId={setLoginId}
-                loginPw={loginPw}
-                setLoginPw={setLoginPw}
-                handleLogin={handleLogin}
-              />
+              {/* LoginModal 분리: 기존 위치 삭제 */}
               {/* Raw 데이터 업로드: 최상단으로 복구 */}
               {isLoggedIn && (
                 <div className="mb-8">
