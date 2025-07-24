@@ -53,7 +53,25 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
   // 그래프용 데이터 가공 (일간/주간/월간)
   React.useEffect(() => {
     if (!inflowHistory || Object.keys(inflowHistory).length === 0) {
-      setInflowChartData([]);
+      // 데이터가 없을 때 최근 7일 mock 데이터 생성
+      const today = new Date();
+      const mockData = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() - (6 - i));
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const dateStr = `${pad(d.getMonth() + 1)}.${pad(d.getDate())}`;
+        return {
+          date: dateStr,
+          '쇼핑(가격비교)': 0,
+          '쇼핑(단일)': 0,
+          '플레이스퀴즈': 0,
+          '저장하기': 0,
+          '저장x2': 0,
+          'KEEP': 0,
+          '쿠팡': 0,
+        };
+      });
+      setInflowChartData(mockData);
       return;
     }
     const allDates = Object.keys(inflowHistory).sort();
@@ -63,7 +81,12 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
       const todayStr = today.toISOString().slice(0, 10);
       // 오늘 제외, 직전 7일(어제~7일 전)만 추출
       const prev7Dates = allDates.filter(d => d < todayStr).slice(-7);
-      const chartData = prev7Dates.map(date => ({ date, ...inflowHistory[date] }));
+      const chartData = prev7Dates.map(date => {
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const displayDate = new Date(date);
+        const dateStr = `${pad(displayDate.getMonth() + 1)}.${pad(displayDate.getDate())}`; // MM.DD 형식
+        return { date: dateStr, ...inflowHistory[date] };
+      });
       setInflowChartData(chartData);
       return;
     }
@@ -107,26 +130,8 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
 
   React.useEffect(() => {
     // rawData가 변경될 때 Firestore에 날짜별 집계 저장
-    if (rawData && rawData.length > 1) {
-      const adTypes = ['쇼핑(가격비교)', '쇼핑(단일)', '플레이스퀴즈', '저장하기', '저장x2', 'KEEP', '쿠팡'];
-      let adTypeIdx = rawData[0].findIndex((h: string) => h.replace(/\s/g, '').includes('광고유형'));
-      let inflowIdx = rawData[0].findIndex((h: string) => h.replace(/\s/g, '').includes('유입수'));
-      if (adTypeIdx !== -1 && inflowIdx !== -1) {
-        const inflowSummary: Record<string, number> = {};
-        for (let i = 1; i < rawData.length; i++) {
-          const type = rawData[i][adTypeIdx];
-          const inflow = Number(rawData[i][inflowIdx]) || 0;
-          if (adTypes.includes(type)) {
-            inflowSummary[type] = (inflowSummary[type] || 0) + inflow;
-          }
-        }
-        // 오늘 날짜(YYYY-MM-DD)
-        const today = new Date();
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        const dateStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-        saveAdInflowHistory(dateStr, inflowSummary);
-      }
-    }
+    // 이 로직은 page.tsx의 handleUpload에서 처리되므로 여기서는 제거
+    // 실제 날짜는 ExcelUploader에서 선택한 날짜를 사용
   }, [rawData]);
   // 광고유형별 유입수 집계 로직
   const adTypes = ['쇼핑(가격비교)', '쇼핑(단일)', '플레이스퀴즈', '저장하기', '저장x2', 'KEEP', '쿠팡'];

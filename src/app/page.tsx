@@ -16,7 +16,7 @@ import {
   saveGuestRates, loadGuestRates,
   saveCorrectionRange, loadCorrectionRange,
   saveUploadData, loadUploadData,
-  saveAdInflowHistory,
+  saveAdInflowHistory, loadAdInflowHistory,
   saveReportInputs, loadReportInputs,
   saveReportDropdownOptions, loadReportDropdownOptions
 } from "@/utils/firestoreService";
@@ -132,6 +132,9 @@ export default function Home() {
   const [yesterdayStr, setYesterdayStr] = React.useState('');
   const [todayFullStr, setTodayFullStr] = React.useState('');
 
+  // 실제 차트 데이터 상태 추가
+  const [realChartData, setRealChartData] = useState<any[]>([]);
+
   useEffect(() => { setIsClient(true); }, []);
 
   // 차트 상태 및 예시 데이터 (쇼핑/플레이스)
@@ -144,6 +147,49 @@ export default function Home() {
     setPeriodType(type);
     // 실제 데이터 가공 로직은 추후 추가
   };
+
+  // Firestore에서 실제 광고 물량 데이터 불러오기
+  useEffect(() => {
+    const loadRealChartData = async () => {
+      try {
+        const inflowHistory = await loadAdInflowHistory();
+        if (inflowHistory && Object.keys(inflowHistory).length > 0) {
+          // 최근 7일 데이터 생성
+          const today = new Date();
+          const prev7Dates = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(today);
+            d.setDate(today.getDate() - (6 - i));
+            return d.toISOString().slice(0, 10); // YYYY-MM-DD 형식
+          });
+
+          // 각 날짜별 데이터 매핑
+          const chartDataWithDates = prev7Dates.map(date => {
+            const dateData = inflowHistory[date] || {};
+            const pad = (n: number) => n.toString().padStart(2, '0');
+            const displayDate = new Date(date);
+            const dateStr = `${pad(displayDate.getMonth() + 1)}.${pad(displayDate.getDate())}`; // MM.DD 형식
+            
+            return {
+              date: dateStr,
+              '쇼핑(가격비교)': dateData['쇼핑(가격비교)'] || 0,
+              '쇼핑(단일)': dateData['쇼핑(단일)'] || 0,
+              '플레이스퀴즈': dateData['플레이스퀴즈'] || 0,
+              '저장하기': dateData['저장하기'] || 0,
+              '저장x2': dateData['저장x2'] || 0,
+              'KEEP': dateData['KEEP'] || 0,
+              '쿠팡': dateData['쿠팡'] || 0,
+            };
+          });
+
+          setRealChartData(chartDataWithDates);
+        }
+      } catch (error) {
+        console.error('실제 차트 데이터 로드 실패:', error);
+      }
+    };
+
+    loadRealChartData();
+  }, []);
 
   // 보정치 적용 함수
   function getCorrectedRates(fact: any, correction: any, typeKey: any) {
@@ -588,6 +634,47 @@ export default function Home() {
           }
         }
         await saveAdInflowHistory(date, inflowSummary);
+        
+        // 차트 데이터 즉시 업데이트
+        const loadRealChartData = async () => {
+          try {
+            const inflowHistory = await loadAdInflowHistory();
+            if (inflowHistory && Object.keys(inflowHistory).length > 0) {
+              // 최근 7일 데이터 생성
+              const today = new Date();
+              const prev7Dates = Array.from({ length: 7 }, (_, i) => {
+                const d = new Date(today);
+                d.setDate(today.getDate() - (6 - i));
+                return d.toISOString().slice(0, 10); // YYYY-MM-DD 형식
+              });
+
+              // 각 날짜별 데이터 매핑
+              const chartDataWithDates = prev7Dates.map(date => {
+                const dateData = inflowHistory[date] || {};
+                const pad = (n: number) => n.toString().padStart(2, '0');
+                const displayDate = new Date(date);
+                const dateStr = `${pad(displayDate.getMonth() + 1)}.${pad(displayDate.getDate())}`; // MM.DD 형식
+                
+                return {
+                  date: dateStr,
+                  '쇼핑(가격비교)': dateData['쇼핑(가격비교)'] || 0,
+                  '쇼핑(단일)': dateData['쇼핑(단일)'] || 0,
+                  '플레이스퀴즈': dateData['플레이스퀴즈'] || 0,
+                  '저장하기': dateData['저장하기'] || 0,
+                  '저장x2': dateData['저장x2'] || 0,
+                  'KEEP': dateData['KEEP'] || 0,
+                  '쿠팡': dateData['쿠팡'] || 0,
+                };
+              });
+
+              setRealChartData(chartDataWithDates);
+            }
+          } catch (error) {
+            console.error('실제 차트 데이터 로드 실패:', error);
+          }
+        };
+
+        loadRealChartData();
       }
     }
 
