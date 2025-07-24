@@ -284,7 +284,7 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
               {/* 날짜 라벨: 그래프 아래에 직접 표시 */}
               <div className="flex w-full justify-between mt-2 px-2 select-none">
                 {inflowChartData.map((d, i) => (
-                  <span key={d.date} className="text-xs text-gray-300" style={{ minWidth: 40, textAlign: 'center' }}>{d.date?.slice(2)}</span>
+                  <span key={d.date} className="text-xs text-gray-300" style={{ minWidth: 40, textAlign: 'center' }}>{d.date}</span>
                 ))}
               </div>
               {/* 미니멀 범례 */}
