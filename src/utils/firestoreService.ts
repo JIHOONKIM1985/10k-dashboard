@@ -89,14 +89,49 @@ export async function loadAdInflowSummary() {
 
 // 날짜별 광고유형별 유입수 집계 Firestore에 누적 저장
 export async function saveAdInflowHistory(date: string, summary: Record<string, number>) {
+  console.log('=== saveAdInflowHistory 함수 ===');
+  console.log('받은 날짜:', date);
+  console.log('받은 summary:', summary);
+  
   const docRef = doc(db, "global", "adInflowHistory");
+  
+  // 기존 데이터 가져오기
   const docSnap = await getDoc(docRef);
   let history: Record<string, any> = {};
   if (docSnap.exists()) {
     history = docSnap.data();
+    console.log('기존 history:', history);
   }
+  
+  console.log('=== 저장 전 확인 ===');
+  console.log('기존 날짜들:', Object.keys(history));
+  console.log('저장하려는 날짜:', date);
+  console.log('기존 데이터에서 해당 날짜:', history[date]);
+  
+  // 새로운 데이터로 해당 날짜 업데이트
   history[date] = { ...summary, updatedAt: Date.now() };
+  console.log('저장할 history:', history);
+  console.log('저장할 날짜 키:', date);
+  console.log('저장할 데이터:', history[date]);
+  console.log('최종 저장할 전체 데이터의 날짜들:', Object.keys(history));
+  
+  console.log('=== 최종 저장 전 최종 확인 ===');
+  console.log('저장할 문서 경로:', docRef.path);
+  console.log('저장할 전체 데이터:', history);
+  
+  // 문서를 완전히 삭제하고 새로 생성
   await setDoc(docRef, history);
+  console.log('Firestore 저장 완료');
+  
+  // 저장 후 즉시 확인
+  const verifyDoc = await getDoc(docRef);
+  if (verifyDoc.exists()) {
+    const verifiedData = verifyDoc.data();
+    console.log('=== 저장 후 검증 ===');
+    console.log('실제 저장된 데이터:', verifiedData);
+    console.log('실제 저장된 날짜들:', Object.keys(verifiedData));
+    console.log('해당 날짜 데이터:', verifiedData[date]);
+  }
 }
 
 // 날짜별 광고유형별 유입수 집계 Firestore에서 불러오기

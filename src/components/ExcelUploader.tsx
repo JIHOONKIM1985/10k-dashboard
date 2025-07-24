@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { ko } from 'date-fns/locale';
 
 interface ExcelUploaderProps {
   onData: (data: any[][], date: string) => void;
@@ -25,7 +26,15 @@ const ExcelUploader: React.FC<ExcelUploaderProps> = ({ onData }) => {
       const wsname = wb.SheetNames[0];
       const ws = wb.Sheets[wsname];
       const parsed = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][];
-      onData(parsed, selectedDate ? selectedDate.toISOString().slice(0, 10) : "");
+      const dateString = selectedDate
+        ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`
+        : "";
+      console.log('=== ExcelUploader 날짜 확인 ===');
+      console.log('선택된 날짜 객체:', selectedDate);
+      console.log('선택된 날짜 객체의 시간:', selectedDate?.toISOString());
+      console.log('전달할 날짜 문자열:', dateString);
+      console.log('날짜 문자열 길이:', dateString.length);
+      onData(parsed, dateString);
       setFileName("");
       setSelectedDate(null);
       if (inputRef.current) inputRef.current.value = "";
@@ -174,7 +183,7 @@ const ExcelUploader: React.FC<ExcelUploaderProps> = ({ onData }) => {
               maxDate={new Date()}
               dateFormat="yyyy-MM-dd"
               inline
-              locale="ko"
+              locale={ko}
             />
             <button
               className="w-full py-2 mt-2 rounded bg-[#393944] text-white text-base font-semibold hover:bg-[#44445a] transition"

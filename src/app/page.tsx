@@ -463,6 +463,59 @@ export default function Home() {
     }
   }, [reportDropdownOptions]);
 
+  // 페이지 로드 시 realChartData 초기화
+  useEffect(() => {
+    const loadInitialRealChartData = async () => {
+      try {
+        const inflowHistory = await loadAdInflowHistory();
+        if (inflowHistory && Object.keys(inflowHistory).length > 0) {
+          // 어제부터 7일 전까지 데이터 생성 (어제가 맨 오른쪽, 오늘 제외)
+          const today = new Date();
+          const todayStr = today.toISOString().slice(0, 10);
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+          
+          const prev7Dates = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(yesterday);
+            d.setDate(yesterday.getDate() - (6 - i)); // 어제부터 6일 전까지 (총 7일)
+            return d.toISOString().slice(0, 10); // YYYY-MM-DD 형식
+          }).filter(date => date < todayStr); // 오늘 날짜 제외
+
+          // 24일 데이터가 있으면 제외 (임시 해결책)
+          const filteredDates = prev7Dates.filter(date => date !== '2025-07-24');
+
+          // 각 날짜별 데이터 매핑
+          const chartDataWithDates = filteredDates.map(date => {
+            const dateData = inflowHistory[date] || {};
+            const pad = (n: number) => n.toString().padStart(2, '0');
+            const displayDate = new Date(date);
+            const dateStr = `${pad(displayDate.getMonth() + 1)}.${pad(displayDate.getDate())}`; // MM.DD 형식
+            
+            return {
+              date: dateStr,
+              '쇼핑(가격비교)': dateData['쇼핑(가격비교)'] || 0,
+              '쇼핑(단일)': dateData['쇼핑(단일)'] || 0,
+              '플레이스퀴즈': dateData['플레이스퀴즈'] || 0,
+              '저장하기': dateData['저장하기'] || 0,
+              '저장x2': dateData['저장x2'] || 0,
+              'KEEP': dateData['KEEP'] || 0,
+              '쿠팡': dateData['쿠팡'] || 0,
+            };
+          });
+
+          console.log('=== 페이지 로드 시 realChartData 초기화 ===');
+          console.log('prev7Dates:', prev7Dates);
+          console.log('chartDataWithDates:', chartDataWithDates);
+          console.log('chartDataWithDates 날짜들:', chartDataWithDates.map(d => d.date));
+          setRealChartData(chartDataWithDates);
+        }
+      } catch (error) {
+        console.error('페이지 로드 시 realChartData 초기화 실패:', error);
+      }
+    };
+    loadInitialRealChartData();
+  }, []);
+
   // 기존 reportInputs → reportMultiInputs로 대체
   useEffect(() => {
     const newInputs: Record<string, { keywordCount: string; channels: string[] }> = {};
@@ -633,23 +686,42 @@ export default function Home() {
             inflowSummary[type] = (inflowSummary[type] || 0) + inflow;
           }
         }
+        console.log('=== 업로드 시 adInflowHistory 저장 ===');
+        console.log('선택된 날짜:', date);
+        console.log('선택된 날짜 타입:', typeof date);
+        console.log('선택된 날짜 길이:', date.length);
+        console.log('계산된 inflowSummary:', inflowSummary);
+        console.log('saveAdInflowHistory 호출 전 - 전달할 날짜:', date);
         await saveAdInflowHistory(date, inflowSummary);
+        console.log('saveAdInflowHistory 완료');
+        
+        // 저장 후 확인
+        const savedData = await loadAdInflowHistory();
+        console.log('저장 후 전체 adInflowHistory:', savedData);
+        console.log('저장 후 해당 날짜 데이터:', savedData[date]);
         
         // 차트 데이터 즉시 업데이트
         const loadRealChartData = async () => {
           try {
             const inflowHistory = await loadAdInflowHistory();
             if (inflowHistory && Object.keys(inflowHistory).length > 0) {
-              // 최근 7일 데이터 생성
+              // 어제부터 7일 전까지 데이터 생성 (어제가 맨 오른쪽, 오늘 제외)
               const today = new Date();
+              const todayStr = today.toISOString().slice(0, 10);
+              const yesterday = new Date(today);
+              yesterday.setDate(today.getDate() - 1);
+              
               const prev7Dates = Array.from({ length: 7 }, (_, i) => {
-                const d = new Date(today);
-                d.setDate(today.getDate() - (6 - i));
+                const d = new Date(yesterday);
+                d.setDate(yesterday.getDate() - (6 - i)); // 어제부터 6일 전까지 (총 7일)
                 return d.toISOString().slice(0, 10); // YYYY-MM-DD 형식
-              });
+              }).filter(date => date < todayStr); // 오늘 날짜 제외
+
+              // 24일 데이터가 있으면 제외 (임시 해결책)
+              const filteredDates = prev7Dates.filter(date => date !== '2025-07-24');
 
               // 각 날짜별 데이터 매핑
-              const chartDataWithDates = prev7Dates.map(date => {
+              const chartDataWithDates = filteredDates.map(date => {
                 const dateData = inflowHistory[date] || {};
                 const pad = (n: number) => n.toString().padStart(2, '0');
                 const displayDate = new Date(date);
@@ -667,6 +739,10 @@ export default function Home() {
                 };
               });
 
+              console.log('=== page.tsx realChartData 생성 ===');
+              console.log('prev7Dates:', prev7Dates);
+              console.log('chartDataWithDates:', chartDataWithDates);
+              console.log('chartDataWithDates 날짜들:', chartDataWithDates.map(d => d.date));
               setRealChartData(chartDataWithDates);
             }
           } catch (error) {
@@ -1184,6 +1260,7 @@ export default function Home() {
                       showRisePreview={showRisePreview}
                       setShowRisePreview={setShowRisePreview}
                       excelSerialToDate={excelSerialToDate}
+                      realChartData={realChartData}
                     />
                   )}
                 </>

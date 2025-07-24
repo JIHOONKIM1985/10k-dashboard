@@ -15,6 +15,7 @@ interface ReportGeneratorProps {
   showRisePreview: boolean;
   setShowRisePreview: (v: boolean) => void;
   excelSerialToDate: (serial: any) => string;
+  realChartData?: any[]; // 추가
 }
 
 const ReportGenerator: React.FC<ReportGeneratorProps> = ({
@@ -30,6 +31,7 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
   showRisePreview,
   setShowRisePreview,
   excelSerialToDate,
+  realChartData,
 }) => {
   const [inflowHistory, setInflowHistory] = React.useState<any>({});
   const [inflowChartData, setInflowChartData] = React.useState<any[]>([]);
@@ -50,8 +52,14 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
     });
   }, []);
 
-  // 그래프용 데이터 가공 (일간/주간/월간)
+  // realChartData가 있으면 사용, 없으면 기존 로직 사용
   React.useEffect(() => {
+    if (realChartData && realChartData.length > 0) {
+      console.log('realChartData 사용:', realChartData);
+      setInflowChartData(realChartData);
+      return;
+    }
+    
     if (!inflowHistory || Object.keys(inflowHistory).length === 0) {
       // 데이터가 없을 때 최근 7일 mock 데이터 생성
       const today = new Date();
@@ -74,23 +82,64 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
       setInflowChartData(mockData);
       return;
     }
+    
     const allDates = Object.keys(inflowHistory).sort();
     if (inflowPeriod === 'day') {
-      // 오늘 날짜 구하기
+      // 어제부터 7일 전까지 데이터 생성 (어제가 맨 오른쪽, 오늘 제외)
       const today = new Date();
       const todayStr = today.toISOString().slice(0, 10);
-      // 오늘 제외, 직전 7일(어제~7일 전)만 추출
-      const prev7Dates = allDates.filter(d => d < todayStr).slice(-7);
-      const chartData = prev7Dates.map(date => {
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().slice(0, 10);
+      
+      // 어제부터 7일 전까지의 날짜들 생성 (오늘 제외)
+      const prev7Dates = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(yesterday);
+        d.setDate(yesterday.getDate() - (6 - i));
+        return d.toISOString().slice(0, 10);
+      }).filter(date => date < todayStr); // 오늘 날짜 제외
+      
+      // 24일 데이터가 있으면 제외 (임시 해결책)
+      const filteredDates = prev7Dates.filter(date => date !== '2025-07-24');
+      
+      const recent7Dates = filteredDates.filter(d => allDates.includes(d));
+      console.log('어제 날짜:', yesterdayStr);
+      console.log('전체 Firestore 날짜들:', allDates);
+      console.log('선택된 7일:', recent7Dates);
+      console.log('Firestore 데이터:', inflowHistory);
+      
+      // 수동으로 차트 데이터 생성
+      const chartData = [];
+      
+      for (let i = 0; i < recent7Dates.length; i++) {
+        const date = recent7Dates[i];
         const pad = (n: number) => n.toString().padStart(2, '0');
-        const displayDate = new Date(date);
-        const dateStr = `${pad(displayDate.getMonth() + 1)}.${pad(displayDate.getDate())}`; // MM.DD 형식
-        return { date: dateStr, ...inflowHistory[date] };
+        const [year, month, day] = date.split('-').map(Number);
+        const dateStr = `${pad(month)}.${pad(day)}`;
+        const dateData = inflowHistory[date] || {};
+        
+        console.log(`날짜 변환 ${i}: ${date} -> ${dateStr}`);
+        console.log(`데이터 확인 ${dateStr}:`, dateData);
+        
+        // updatedAt 필드 제거
+        const { updatedAt, ...cleanData } = dateData;
+        
+        const result = { date: dateStr, ...cleanData };
+        console.log(`최종 결과 ${dateStr}:`, result);
+        
+        chartData.push(result);
+      }
+      
+      console.log('=== 최종 차트 데이터 ===');
+      console.log('차트 데이터 길이:', chartData.length);
+      chartData.forEach((item, idx) => {
+        console.log(`인덱스 ${idx}:`, item);
       });
+      console.log('차트 데이터:', chartData);
+      console.log('차트 데이터 순서:', chartData.map(d => d.date));
       setInflowChartData(chartData);
       return;
     }
-    const adTypes = ['쇼핑(가격비교)', '쇼핑(단일)', '플레이스퀴즈', '저장하기', '저장x2', 'KEEP', '쿠팡'];
     // 날짜 정렬 (최신순)
     const dates = Object.keys(inflowHistory).sort();
     let chartData: any[] = [];
@@ -259,10 +308,22 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
                 <div className="absolute w-full h-px bg-gray-700/40" style={{ top: '80%' }} />
               </div>
               <ResponsiveContainer width="95%" height="100%">
-                <LineChart data={inflowChartData} margin={{ left: 0, right: 0, top: 8, bottom: 8 }}>
+                <LineChart data={realChartData && realChartData.length > 0 ? realChartData : inflowChartData} margin={{ left: 0, right: 0, top: 8, bottom: 8 }}>
+                  {/* 디버깅용 로그 */}
+                  {console.log('=== 차트 데이터 디버깅 ===')}
+                  {console.log('realChartData:', realChartData)}
+                  {console.log('inflowChartData:', inflowChartData)}
+                  {console.log('사용할 차트 데이터:', realChartData && realChartData.length > 0 ? realChartData : inflowChartData)}
+                  {console.log('사용할 차트 데이터의 날짜들:', (realChartData && realChartData.length > 0 ? realChartData : inflowChartData).map(d => d.date))}
                   <GlowDefs />
                   <CartesianGrid stroke="#393944" vertical={false} horizontal={false} strokeWidth={0.5} />
-                  <XAxis hide dataKey="date" />
+                  <XAxis 
+                    dataKey="date" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#9ca3af' }}
+                    tickMargin={8}
+                  />
                   <YAxis hide width={0} />
                   <Tooltip content={<CustomTooltip adTypes={adTypes} lineColors={lineColors} />} />
                   {adTypes.map((type, idx) => (
@@ -281,12 +342,6 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
                   ))}
                 </LineChart>
               </ResponsiveContainer>
-              {/* 날짜 라벨: 그래프 아래에 직접 표시 */}
-              <div className="flex w-full justify-between mt-2 px-2 select-none">
-                {inflowChartData.map((d, i) => (
-                  <span key={d.date} className="text-xs text-gray-300" style={{ minWidth: 40, textAlign: 'center' }}>{d.date}</span>
-                ))}
-              </div>
               {/* 미니멀 범례 */}
               <div className="flex flex-wrap gap-4 justify-center mt-4">
                 {adTypes.map((type, idx) => (
