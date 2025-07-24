@@ -154,21 +154,24 @@ export default function Home() {
       try {
         const inflowHistory = await loadAdInflowHistory();
         if (inflowHistory && Object.keys(inflowHistory).length > 0) {
-          // 최근 7일 데이터 생성
-          const today = new Date();
+          // 어제부터 6일 전까지 7일을 오름차순으로 생성
+          const end = new Date();
+          end.setDate(end.getDate() - 1); // 어제
+          const start = new Date();
+          start.setDate(end.getDate() - 6); // 7일 전(포함)
           const prev7Dates = Array.from({ length: 7 }, (_, i) => {
-            const d = new Date(today);
-            d.setDate(today.getDate() - (6 - i));
-            return d.toISOString().slice(0, 10); // YYYY-MM-DD 형식
+            const d = new Date(start);
+            d.setDate(start.getDate() + i);
+            return d.toISOString().slice(0, 10);
           });
 
           // 각 날짜별 데이터 매핑
           const chartDataWithDates = prev7Dates.map(date => {
             const dateData = inflowHistory[date] || {};
             const pad = (n: number) => n.toString().padStart(2, '0');
-            const displayDate = new Date(date);
-            const dateStr = `${pad(displayDate.getMonth() + 1)}.${pad(displayDate.getDate())}`; // MM.DD 형식
-            
+            // MM.DD 형식으로 변환
+            const [year, month, day] = date.split('-').map(Number);
+            const dateStr = `${pad(month)}.${pad(day)}`;
             return {
               date: dateStr,
               '쇼핑(가격비교)': dateData['쇼핑(가격비교)'] || 0,
@@ -469,28 +472,24 @@ export default function Home() {
       try {
         const inflowHistory = await loadAdInflowHistory();
         if (inflowHistory && Object.keys(inflowHistory).length > 0) {
-          // 어제부터 7일 전까지 데이터 생성 (어제가 맨 오른쪽, 오늘 제외)
-          const today = new Date();
-          const todayStr = today.toISOString().slice(0, 10);
-          const yesterday = new Date(today);
-          yesterday.setDate(today.getDate() - 1);
-          
+          // 어제부터 6일 전까지 7일을 오름차순으로 생성
+          const end = new Date();
+          end.setDate(end.getDate() - 1); // 어제
+          const start = new Date();
+          start.setDate(end.getDate() - 6); // 7일 전(포함)
           const prev7Dates = Array.from({ length: 7 }, (_, i) => {
-            const d = new Date(yesterday);
-            d.setDate(yesterday.getDate() - (6 - i)); // 어제부터 6일 전까지 (총 7일)
-            return d.toISOString().slice(0, 10); // YYYY-MM-DD 형식
-          }).filter(date => date < todayStr); // 오늘 날짜 제외
-
-          // 24일 데이터가 있으면 제외 (임시 해결책)
-          const filteredDates = prev7Dates.filter(date => date !== '2025-07-24');
+            const d = new Date(start);
+            d.setDate(start.getDate() + i);
+            return d.toISOString().slice(0, 10);
+          });
 
           // 각 날짜별 데이터 매핑
-          const chartDataWithDates = filteredDates.map(date => {
+          const chartDataWithDates = prev7Dates.map(date => {
             const dateData = inflowHistory[date] || {};
             const pad = (n: number) => n.toString().padStart(2, '0');
-            const displayDate = new Date(date);
-            const dateStr = `${pad(displayDate.getMonth() + 1)}.${pad(displayDate.getDate())}`; // MM.DD 형식
-            
+            // MM.DD 형식으로 변환
+            const [year, month, day] = date.split('-').map(Number);
+            const dateStr = `${pad(month)}.${pad(day)}`;
             return {
               date: dateStr,
               '쇼핑(가격비교)': dateData['쇼핑(가격비교)'] || 0,
@@ -503,10 +502,6 @@ export default function Home() {
             };
           });
 
-          console.log('=== 페이지 로드 시 realChartData 초기화 ===');
-          console.log('prev7Dates:', prev7Dates);
-          console.log('chartDataWithDates:', chartDataWithDates);
-          console.log('chartDataWithDates 날짜들:', chartDataWithDates.map(d => d.date));
           setRealChartData(chartDataWithDates);
         }
       } catch (error) {
@@ -705,28 +700,24 @@ export default function Home() {
           try {
             const inflowHistory = await loadAdInflowHistory();
             if (inflowHistory && Object.keys(inflowHistory).length > 0) {
-              // 어제부터 7일 전까지 데이터 생성 (어제가 맨 오른쪽, 오늘 제외)
-              const today = new Date();
-              const todayStr = today.toISOString().slice(0, 10);
-              const yesterday = new Date(today);
-              yesterday.setDate(today.getDate() - 1);
-              
+              // 어제부터 6일 전까지 7일을 오름차순으로 생성
+              const end = new Date();
+              end.setDate(end.getDate() - 1); // 어제
+              const start = new Date();
+              start.setDate(end.getDate() - 6); // 7일 전(포함)
               const prev7Dates = Array.from({ length: 7 }, (_, i) => {
-                const d = new Date(yesterday);
-                d.setDate(yesterday.getDate() - (6 - i)); // 어제부터 6일 전까지 (총 7일)
-                return d.toISOString().slice(0, 10); // YYYY-MM-DD 형식
-              }).filter(date => date < todayStr); // 오늘 날짜 제외
-
-              // 24일 데이터가 있으면 제외 (임시 해결책)
-              const filteredDates = prev7Dates.filter(date => date !== '2025-07-24');
+                const d = new Date(start);
+                d.setDate(start.getDate() + i);
+                return d.toISOString().slice(0, 10);
+              });
 
               // 각 날짜별 데이터 매핑
-              const chartDataWithDates = filteredDates.map(date => {
+              const chartDataWithDates = prev7Dates.map(date => {
                 const dateData = inflowHistory[date] || {};
                 const pad = (n: number) => n.toString().padStart(2, '0');
-                const displayDate = new Date(date);
-                const dateStr = `${pad(displayDate.getMonth() + 1)}.${pad(displayDate.getDate())}`; // MM.DD 형식
-                
+                // MM.DD 형식으로 변환
+                const [year, month, day] = date.split('-').map(Number);
+                const dateStr = `${pad(month)}.${pad(day)}`;
                 return {
                   date: dateStr,
                   '쇼핑(가격비교)': dateData['쇼핑(가격비교)'] || 0,
@@ -739,10 +730,6 @@ export default function Home() {
                 };
               });
 
-              console.log('=== page.tsx realChartData 생성 ===');
-              console.log('prev7Dates:', prev7Dates);
-              console.log('chartDataWithDates:', chartDataWithDates);
-              console.log('chartDataWithDates 날짜들:', chartDataWithDates.map(d => d.date));
               setRealChartData(chartDataWithDates);
             }
           } catch (error) {
@@ -1127,7 +1114,7 @@ export default function Home() {
           />
           <div className="flex-1">
             <main className="p-8">
-              <div className="max-w-[1200px] mx-auto w-full">
+              <div className="max-w-[1440px] mx-auto w-full">
               {/* LoginModal 분리: 기존 위치 삭제 */}
               {/* Raw 데이터 업로드: 최상단으로 복구 */}
               {isLoggedIn && (

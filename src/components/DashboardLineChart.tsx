@@ -102,6 +102,29 @@ export default function DashboardLineChart({
           {chartTitleToUse}
           <sup className="ml-2 text-xs text-gray-400 sup-top-align">*소수점 이하 절사</sup>
         </div>
+        {/* periodType 버튼 */}
+        <div className="flex gap-1 bg-transparent rounded-lg">
+          {[
+            { key: 'day', label: '일간' },
+            { key: 'week', label: '주간' },
+            { key: 'month', label: '월간' }
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => onChangePeriod(key as 'day' | 'week' | 'month')}
+              className={`
+                px-4 py-1 rounded-full border transition
+                ${periodType === key
+                  ? 'border-blue-500 bg-blue-50/10 text-blue-400 font-bold'
+                  : 'border-transparent text-gray-400 hover:border-gray-600 hover:bg-white/5'}
+              `}
+              type="button"
+              style={{ minWidth: 56 }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         {/* 미니멀 범례 */}
         <div className="flex gap-3">
           {lines.map((line, idx) => (
@@ -123,7 +146,7 @@ export default function DashboardLineChart({
       </div>
       {/* 차트 */}
       <ResponsiveContainer width="100%" height={320}>
-        <LineChart data={chartData} margin={{ top: 24, right: 32, left: 0, bottom: 0 }}>
+        <LineChart data={chartData} margin={{ top: 24, right: 48, left: 48, bottom: 0 }}>
           <defs>
             {lines.filter(l => l.visible).map((line, idx) => (
               <linearGradient key={line.key} id={getGradientId(line.color, idx)} x1="0" y1="0" x2="0" y2="1">
@@ -133,7 +156,32 @@ export default function DashboardLineChart({
             ))}
           </defs>
           <CartesianGrid stroke="#444" strokeDasharray="0" vertical={false} horizontal={true} strokeWidth={0.25} />
-          <XAxis dataKey="date" tick={{ fill: "#e4e4e7", fontSize: 13 }} axisLine={false} tickLine={false} padding={{ left: 10, right: 10 }} />
+          <XAxis
+            dataKey="date"
+            axisLine={false}
+            tickLine={false}
+            interval="preserveStartEnd"
+            minTickGap={0}
+            type="category"
+            allowDuplicatedCategory={false}
+            tickMargin={16}
+            tick={(props) => {
+              const { x, y, payload, index } = props;
+              const textAnchor = index === 0 ? 'start' : index === 6 ? 'end' : 'middle';
+              return (
+                <text
+                  x={x}
+                  y={y + 18}
+                  textAnchor={textAnchor}
+                  fill="#e4e4e7"
+                  fontSize={11}
+                  style={{ pointerEvents: 'none' }}
+                >
+                  {payload.value}
+                </text>
+              );
+            }}
+          />
           <YAxis
             domain={[0, 100]}
             ticks={[0, 20, 40, 60, 80, 100]}
@@ -176,4 +224,4 @@ export default function DashboardLineChart({
       </ResponsiveContainer>
     </div>
   );
-} 
+}
