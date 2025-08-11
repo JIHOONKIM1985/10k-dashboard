@@ -387,8 +387,13 @@ export default function Home() {
   // 비로그인 시 guestRates는 Firestore에서만 불러오고, correctionRange와 무관하게 항상 고정
   useEffect(() => {
     if (!isLoggedIn) {
+      console.log("비로그인 사용자: guestRates 로딩 시작...");
       loadGuestRates().then(rates => {
+        console.log("비로그인 사용자: guestRates 로딩 완료:", rates);
         setGuestRates(rates);
+      }).catch(error => {
+        console.error("비로그인 사용자: guestRates 로딩 실패:", error);
+        setGuestRates(null);
       });
     }
   }, [isLoggedIn]);

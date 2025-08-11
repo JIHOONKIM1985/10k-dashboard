@@ -6,68 +6,122 @@ const db = getFirestore(app);
 
 // guestRates Firestore에 저장 (관리자 업로드 시)
 export async function saveGuestRates(guestRates: any) {
-  await setDoc(doc(db, "global", "guestRates"), { ...guestRates, updatedAt: Date.now() });
+  try {
+    await setDoc(doc(db, "global", "guestRates"), { ...guestRates, updatedAt: Date.now() });
+    console.log("guestRates 저장 성공");
+  } catch (error) {
+    console.error("guestRates 저장 실패:", error);
+    throw error;
+  }
 }
 
 // guestRates Firestore에서 불러오기 (비로그인 사용자)
 export async function loadGuestRates() {
-  const docRef = doc(db, "global", "guestRates");
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    const data = docSnap.data();
-    const { updatedAt, ...rates } = data;
-    return rates;
+  try {
+    console.log("guestRates 로딩 시작...");
+    const docRef = doc(db, "global", "guestRates");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const { updatedAt, ...rates } = data;
+      console.log("guestRates 로딩 성공:", rates);
+      return rates;
+    } else {
+      console.log("guestRates 문서가 존재하지 않습니다.");
+      return null;
+    }
+  } catch (error: any) {
+    console.error("guestRates 로딩 실패:", error);
+    if (error.code === 'permission-denied') {
+      console.error("Firebase 권한 오류: Firestore 보안 규칙을 확인해주세요.");
+    }
+    return null;
   }
-  return null;
 }
 
 // 보정치(correctionRange) Firestore에 저장
 export async function saveCorrectionRange(range: any) {
-  await setDoc(doc(db, "global", "adjustment"), { ...range, updatedAt: Date.now() });
+  try {
+    await setDoc(doc(db, "global", "adjustment"), { ...range, updatedAt: Date.now() });
+    console.log("보정치 저장 성공");
+  } catch (error) {
+    console.error("보정치 저장 실패:", error);
+    throw error;
+  }
 }
 
 // 보정치(correctionRange) Firestore에서 불러오기
 export async function loadCorrectionRange() {
-  const docRef = doc(db, "global", "adjustment");
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    const data = docSnap.data();
-    const { updatedAt, ...range } = data;
-    return range;
+  try {
+    console.log("보정치 로딩 시작...");
+    const docRef = doc(db, "global", "adjustment");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const { updatedAt, ...range } = data;
+      console.log("보정치 로딩 성공:", range);
+      return range;
+    } else {
+      console.log("보정치 문서가 존재하지 않습니다.");
+      return null;
+    }
+  } catch (error: any) {
+    console.error("보정치 로딩 실패:", error);
+    if (error.code === 'permission-denied') {
+      console.error("Firebase 권한 오류: Firestore 보안 규칙을 확인해주세요.");
+    }
+    return null;
   }
-  return null;
 }
 
 // 업로드 데이터(팩트 등락률) Firestore에 저장
 export async function saveUploadData(uploadData: any) {
-  await setDoc(doc(db, "global", "uploadData"), { ...uploadData, updatedAt: Date.now() });
+  try {
+    await setDoc(doc(db, "global", "uploadData"), { ...uploadData, updatedAt: Date.now() });
+    console.log("업로드 데이터 저장 성공");
+  } catch (error) {
+    console.error("업로드 데이터 저장 실패:", error);
+    throw error;
+  }
 }
 
 // 업로드 데이터(팩트 등락률) Firestore에서 불러오기
 export async function loadUploadData() {
-  const docRef = doc(db, "global", "uploadData");
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    const data = docSnap.data();
-    const { updatedAt, ...uploadData } = data;
-    return {
-      ...uploadData,
-      rawData: uploadData.rawData ? JSON.parse(uploadData.rawData) : [],
-      tempData: uploadData.tempData ? JSON.parse(uploadData.tempData) : [],
-      shoppingList: uploadData.shoppingList ? JSON.parse(uploadData.shoppingList) : [],
-      placeList: uploadData.placeList ? JSON.parse(uploadData.placeList) : [],
-      rate: uploadData.rate ?? null,
-      singleRate: uploadData.singleRate ?? null,
-      compareRate: uploadData.compareRate ?? null,
-      placeRate: uploadData.placeRate ?? null,
-      quizRate: uploadData.quizRate ?? null,
-      saveRate: uploadData.saveRate ?? null,
-      save2Rate: uploadData.save2Rate ?? null,
-      keepRate: uploadData.keepRate ?? null,
-      reportRows: uploadData.reportRows ? JSON.parse(uploadData.reportRows) : [],
-    };
+  try {
+    console.log("업로드 데이터 로딩 시작...");
+    const docRef = doc(db, "global", "uploadData");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const { updatedAt, ...uploadData } = data;
+      console.log("업로드 데이터 로딩 성공");
+      return {
+        ...uploadData,
+        rawData: uploadData.rawData ? JSON.parse(uploadData.rawData) : [],
+        tempData: uploadData.tempData ? JSON.parse(uploadData.tempData) : [],
+        shoppingList: uploadData.shoppingList ? JSON.parse(uploadData.shoppingList) : [],
+        placeList: uploadData.placeList ? JSON.parse(uploadData.placeList) : [],
+        rate: uploadData.rate ?? null,
+        singleRate: uploadData.singleRate ?? null,
+        compareRate: uploadData.compareRate ?? null,
+        placeRate: uploadData.placeRate ?? null,
+        quizRate: uploadData.quizRate ?? null,
+        saveRate: uploadData.saveRate ?? null,
+        save2Rate: uploadData.save2Rate ?? null,
+        keepRate: uploadData.keepRate ?? null,
+        reportRows: uploadData.reportRows ? JSON.parse(uploadData.reportRows) : [],
+      };
+    } else {
+      console.log("업로드 데이터 문서가 존재하지 않습니다.");
+      return null;
+    }
+  } catch (error: any) {
+    console.error("업로드 데이터 로딩 실패:", error);
+    if (error.code === 'permission-denied') {
+      console.error("Firebase 권한 오류: Firestore 보안 규칙을 확인해주세요.");
+    }
+    return null;
   }
-  return null;
 }
 
 // 어제 집행 물량 집계 Firestore에 저장
