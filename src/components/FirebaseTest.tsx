@@ -4,8 +4,7 @@ import {
   loadGuestRates,
   loadCorrectionRange,
   loadUploadData,
-  loadAdInflowHistory,
-  debugFirebaseStatus
+  loadAdInflowHistory
 } from '@/utils/firestoreService';
 
 export default function FirebaseTest() {
@@ -48,27 +47,18 @@ export default function FirebaseTest() {
         results.uploadData = { success: false, error: error.message };
       }
 
-             // 5. 광고 유입 이력 로딩 테스트
-       console.log("=== 광고 유입 이력 로딩 테스트 ===");
-       try {
-         const adInflowHistory = await loadAdInflowHistory();
-         results.adInflowHistory = { success: true, hasData: !!adInflowHistory };
-       } catch (error: any) {
-         results.adInflowHistory = { success: false, error: error.message };
-       }
+      // 5. 광고 유입 이력 로딩 테스트
+      console.log("=== 광고 유입 이력 로딩 테스트 ===");
+      try {
+        const adInflowHistory = await loadAdInflowHistory();
+        results.adInflowHistory = { success: true, hasData: !!adInflowHistory };
+      } catch (error: any) {
+        results.adInflowHistory = { success: false, error: error.message };
+      }
 
-       // 6. 상세 디버깅 테스트
-       console.log("=== 상세 디버깅 테스트 ===");
-       try {
-         const debugResult = await debugFirebaseStatus();
-         results.debugStatus = { success: debugResult };
-       } catch (error: any) {
-         results.debugStatus = { success: false, error: error.message };
-       }
-
-     } catch (error: any) {
-       results.generalError = error.message;
-     }
+    } catch (error: any) {
+      results.generalError = error.message;
+    }
 
     setTestResults(results);
     setIsLoading(false);
@@ -126,33 +116,24 @@ export default function FirebaseTest() {
             </div>
           )}
 
-                     {testResults.adInflowHistory && (
-             <div className={`p-3 rounded-lg ${testResults.adInflowHistory.success ? 'bg-green-900/20 border border-green-500/30' : 'bg-red-900/20 border border-red-500/30'}`}>
-               <div className="font-semibold text-white">광고 유입 이력: {testResults.adInflowHistory.success ? '✅ 성공' : '❌ 실패'}</div>
-               {testResults.adInflowHistory.success && (
-                 <div className="text-green-400 text-sm mt-1">데이터 존재: {testResults.adInflowHistory.hasData ? '예' : '아니오'}</div>
-               )}
-               {!testResults.adInflowHistory.success && (
-                 <div className="text-red-400 text-sm mt-1">에러: {testResults.adInflowHistory.error}</div>
-               )}
-             </div>
-           )}
+          {testResults.adInflowHistory && (
+            <div className={`p-3 rounded-lg ${testResults.adInflowHistory.success ? 'bg-green-900/20 border border-green-500/30' : 'bg-red-900/20 border border-red-500/30'}`}>
+              <div className="font-semibold text-white">광고 유입 이력: {testResults.adInflowHistory.success ? '✅ 성공' : '❌ 실패'}</div>
+              {testResults.adInflowHistory.success && (
+                <div className="text-green-400 text-sm mt-1">데이터 존재: {testResults.adInflowHistory.hasData ? '예' : '아니오'}</div>
+              )}
+              {!testResults.adInflowHistory.success && (
+                <div className="text-red-400 text-sm mt-1">에러: {testResults.adInflowHistory.error}</div>
+              )}
+            </div>
+          )}
 
-           {testResults.debugStatus && (
-             <div className={`p-3 rounded-lg ${testResults.debugStatus.success ? 'bg-green-900/20 border border-green-500/30' : 'bg-red-900/20 border border-red-500/30'}`}>
-               <div className="font-semibold text-white">상세 디버깅: {testResults.debugStatus.success ? '✅ 성공' : '❌ 실패'}</div>
-               {!testResults.debugStatus.success && (
-                 <div className="text-red-400 text-sm mt-1">에러: {testResults.debugStatus.error}</div>
-               )}
-             </div>
-           )}
-
-           {testResults.generalError && (
-             <div className="p-3 rounded-lg bg-red-900/20 border border-red-500/30">
-               <div className="font-semibold text-white">일반 에러:</div>
-               <div className="text-red-400 text-sm mt-1">{testResults.generalError}</div>
-             </div>
-           )}
+          {testResults.generalError && (
+            <div className="p-3 rounded-lg bg-red-900/20 border border-red-500/30">
+              <div className="font-semibold text-white">일반 에러:</div>
+              <div className="text-red-400 text-sm mt-1">{testResults.generalError}</div>
+            </div>
+          )}
         </div>
       )}
     </div>

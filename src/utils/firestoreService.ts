@@ -1,16 +1,18 @@
 // src/utils/firestoreService.ts
-import { doc, setDoc, getDoc } from "firebase/firestore";
-import { db } from "../firebaseConfig";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+import { app } from "../firebaseConfig";
+
+const db = getFirestore(app);
 
 // Firebase 연결 상태 확인 함수
 export async function checkFirebaseConnection() {
   try {
     console.log("=== Firebase 연결 상태 확인 ===");
+    console.log("Firebase app:", app);
     console.log("Firestore db:", db);
     
     // 간단한 테스트 문서 읽기 시도
     const testDocRef = doc(db, "global", "test");
-    console.log("테스트 문서 참조:", testDocRef);
     const testDocSnap = await getDoc(testDocRef);
     console.log("Firebase 연결 성공 - 테스트 문서 읽기 가능");
     return true;
@@ -18,32 +20,6 @@ export async function checkFirebaseConnection() {
     console.error("Firebase 연결 실패:", error);
     console.error("에러 코드:", error.code);
     console.error("에러 메시지:", error.message);
-    console.error("에러 스택:", error.stack);
-    return false;
-  }
-}
-
-// 더 자세한 Firebase 상태 확인
-export async function debugFirebaseStatus() {
-  try {
-    console.log("=== Firebase 상세 디버깅 ===");
-    console.log("현재 시간:", new Date().toISOString());
-    console.log("환경:", process.env.NODE_ENV);
-    console.log("Firestore db 객체:", db);
-    
-    // 실제 데이터가 있는 문서로 테스트
-    const guestRatesRef = doc(db, "global", "guestRates");
-    console.log("guestRates 문서 참조:", guestRatesRef);
-    
-    const guestRatesSnap = await getDoc(guestRatesRef);
-    console.log("guestRates 문서 존재:", guestRatesSnap.exists());
-    if (guestRatesSnap.exists()) {
-      console.log("guestRates 데이터:", guestRatesSnap.data());
-    }
-    
-    return true;
-  } catch (error: any) {
-    console.error("Firebase 디버깅 실패:", error);
     return false;
   }
 }

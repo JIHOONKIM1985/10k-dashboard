@@ -19,7 +19,7 @@ import {
   saveAdInflowHistory, loadAdInflowHistory,
   saveReportInputs, loadReportInputs,
   saveReportDropdownOptions, loadReportDropdownOptions,
-  checkFirebaseConnection, debugFirebaseStatus
+  checkFirebaseConnection
 } from "@/utils/firestoreService";
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
@@ -143,13 +143,6 @@ export default function Home() {
     // Firebase 연결 상태 확인
     checkFirebaseConnection().then(isConnected => {
       console.log("Firebase 연결 상태:", isConnected ? "성공" : "실패");
-      
-      // 연결 실패 시 상세 디버깅
-      if (!isConnected) {
-        debugFirebaseStatus().then(success => {
-          console.log("상세 디버깅 완료:", success);
-        });
-      }
     });
   }, []);
 
