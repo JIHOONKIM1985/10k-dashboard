@@ -4,6 +4,26 @@ import { app } from "../firebaseConfig";
 
 const db = getFirestore(app);
 
+// Firebase 연결 상태 확인 함수
+export async function checkFirebaseConnection() {
+  try {
+    console.log("=== Firebase 연결 상태 확인 ===");
+    console.log("Firebase app:", app);
+    console.log("Firestore db:", db);
+    
+    // 간단한 테스트 문서 읽기 시도
+    const testDocRef = doc(db, "global", "test");
+    const testDocSnap = await getDoc(testDocRef);
+    console.log("Firebase 연결 성공 - 테스트 문서 읽기 가능");
+    return true;
+  } catch (error: any) {
+    console.error("Firebase 연결 실패:", error);
+    console.error("에러 코드:", error.code);
+    console.error("에러 메시지:", error.message);
+    return false;
+  }
+}
+
 // guestRates Firestore에 저장 (관리자 업로드 시)
 export async function saveGuestRates(guestRates: any) {
   try {

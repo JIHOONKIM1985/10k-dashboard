@@ -18,7 +18,8 @@ import {
   saveUploadData, loadUploadData,
   saveAdInflowHistory, loadAdInflowHistory,
   saveReportInputs, loadReportInputs,
-  saveReportDropdownOptions, loadReportDropdownOptions
+  saveReportDropdownOptions, loadReportDropdownOptions,
+  checkFirebaseConnection
 } from "@/utils/firestoreService";
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
@@ -30,6 +31,7 @@ import RateDisplaySection from '@/components/RateDisplaySection';
 import ShoppingTable from '@/components/ShoppingTable';
 import PlaceTable from '@/components/PlaceTable';
 import ReportGenerator from '@/components/ReportGenerator';
+import FirebaseTest from '@/components/FirebaseTest';
 // MobileSidebar 컴포넌트 복사 (layout.tsx에서 삭제했으므로)
 function MobileSidebar({ open, onClose, children }: { open: boolean, onClose: () => void, children: React.ReactNode }) {
   return (
@@ -135,7 +137,14 @@ export default function Home() {
   // 실제 차트 데이터 상태 추가
   const [realChartData, setRealChartData] = useState<any[]>([]);
 
-  useEffect(() => { setIsClient(true); }, []);
+  useEffect(() => { 
+    setIsClient(true); 
+    
+    // Firebase 연결 상태 확인
+    checkFirebaseConnection().then(isConnected => {
+      console.log("Firebase 연결 상태:", isConnected ? "성공" : "실패");
+    });
+  }, []);
 
   // 차트 상태 및 예시 데이터 (쇼핑/플레이스)
   const lineOptions = activeMenu === 'shopping' ? shoppingLineOptions : placeLineOptions;
@@ -378,8 +387,19 @@ export default function Home() {
   // Firestore에서 보정치(correctionRange) 항상 불러오기
   useEffect(() => {
     async function fetchCorrectionRange() {
-      const range = await loadCorrectionRange();
-      if (range) setCorrectionRange(range);
+      console.log("=== 보정치 로딩 시작 ===");
+      try {
+        const range = await loadCorrectionRange();
+        console.log("보정치 로딩 결과:", range);
+        if (range) {
+          setCorrectionRange(range);
+          console.log("보정치 설정 완료");
+        } else {
+          console.log("보정치 데이터가 없습니다. 기본값 사용");
+        }
+      } catch (error) {
+        console.error("보정치 로딩 중 에러:", error);
+      }
     }
     fetchCorrectionRange();
   }, [isLoggedIn, showCorrectionSetting]);
@@ -401,10 +421,12 @@ export default function Home() {
   // 로그인 후 Firestore에서 데이터를 불러와서 state에 세팅하는 useEffect 추가
   useEffect(() => {
     if (isLoggedIn) {
+      console.log("=== 로그인 사용자: 업로드 데이터 로딩 시작 ===");
       setIsLoading(true);
       loadUploadData().then(data => {
         console.log("Firestore에서 불러온 데이터:", data);
         if (data) {
+          console.log("데이터 설정 시작...");
           setRawData(data.rawData || []);
           setTempData(data.tempData || []);
           setShoppingList(data.shoppingList || []);
@@ -417,6 +439,7 @@ export default function Home() {
           setSaveRate(data.saveRate || null);
           setSave2Rate(data.save2Rate || null);
           setKeepRate(data.keepRate || null);
+          console.log("데이터 설정 완료");
           // setReportRows(data.reportRows ? JSON.parse(data.reportRows) : []); // Firestore에서 reportRows 불러오기 제거
         } else {
           // 데이터가 없을 때도 명확히 로그
@@ -427,6 +450,8 @@ export default function Home() {
         console.error("loadUploadData 에러:", err);
         setIsLoading(false);
       });
+    } else {
+      console.log("비로그인 상태: 업로드 데이터 로딩 건너뜀");
     }
   }, [isLoggedIn]);
 
@@ -1388,7 +1413,11 @@ export default function Home() {
                     isLoggedIn={isLoggedIn}
                   />
                 )}
-                {/* 테이블/그래프/미리보기/리포트 등은 모바일에서 숨김 */}
+                {/* Firebase 테스트 컴포넌트 추가 */}
+            <div className="max-w-[420px] mx-auto w-full">
+              <FirebaseTest />
+            </div>
+            {/* 테이블/그래프/미리보기/리포트 등은 모바일에서 숨김 */}
               </>
             )}
         </main>
